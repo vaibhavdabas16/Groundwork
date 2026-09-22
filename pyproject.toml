@@ -1,0 +1,73 @@
+[project]
+name = "contextforge"
+version = "0.1.0"
+description = "Governed, version-controlled business context layer + secure MCP server over a DuckDB analytical warehouse (Phase 1)."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=1",
+    "duckdb>=2.0.0,<3",
+    "httpx>=0.27",
+    "mcp>=2.3.0,<3",
+    "openai>=1",
+    "pydantic>=2.14,<3",
+    "pyjwt[crypto]>=2.8",
+    "pyyaml>=6.0.3",
+    "ruamel-yaml>=0.18",
+    "slack-bolt>=1.20",
+    "slack-sdk>=3.30",
+    "sqlglot>=30.33.0,<31",
+]
+
+[project.scripts]
+contextforge = "contextforge.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.9,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-timeout>=2.4.0",
+    "ruff>=0.17.6",
+    "types-pyyaml>=6.0.12.20261113",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = ["S101", "S608", "RUF012"]
+
+[tool.ruff.lint.pycodestyle]
+# The formatter wraps code at 110; long SQL/message string literals may run to 130.
+max-line-length = 130
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "B011"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = false
+files = ["src/contextforge"]
+
+[[tool.mypy.overrides]]
+module = ["sqlglot.*", "duckdb.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 300
+markers = [
+    "integration: requires the real Olist warehouse to be built (make build)",
+    "security: security boundary tests",
+    "mcp: real MCP transport round-trip tests",
+    "agent: agent runtime tests (real MCP + governed SQL, scripted test-double model)",
+    "live: requires real model-provider credentials (ANTHROPIC_API_KEY)",
+]

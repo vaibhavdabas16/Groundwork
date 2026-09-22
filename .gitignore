@@ -1,0 +1,44 @@
+# Python / tooling
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Environment & secrets (never commit)
+.env
+*.key
+data/secrets/
+
+# Source dataset and derived warehouses: CC BY-NC-SA 4.0 data is downloaded, not redistributed.
+data/raw/
+data/warehouse/
+data/ops/
+data/context_releases/
+data/evals/
+data/logs/
+*.duckdb
+*.duckdb.wal
+*.sqlite
+
+# Small provenance manifests ARE committed
+!data/manifests/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Phase 3 product config (Slack/user ids) and local secrets
+config/product.yaml
+.env
+secrets/
+
+# Phase 3 deployment secrets
+deploy/.env
+backups/
