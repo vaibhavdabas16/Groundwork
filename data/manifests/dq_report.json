@@ -1,0 +1,838 @@
+{
+  "generated_at": "2026-11-19T18:01:58+00:00",
+  "invariants_failed": [],
+  "observation_baseline_drift": {},
+  "checks": [
+    {
+      "id": "pk_unique.orders",
+      "kind": "invariant",
+      "category": "keys",
+      "description": "(order_id) is unique and non-null in raw.orders",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "pk_unique.customers",
+      "kind": "invariant",
+      "category": "keys",
+      "description": "(customer_id) is unique and non-null in raw.customers",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "pk_unique.order_items",
+      "kind": "invariant",
+      "category": "keys",
+      "description": "(order_id, order_item_id) is unique and non-null in raw.order_items",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "pk_unique.order_payments",
+      "kind": "invariant",
+      "category": "keys",
+      "description": "(order_id, payment_sequential) is unique and non-null in raw.order_payments",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "pk_unique.order_reviews",
+      "kind": "invariant",
+      "category": "keys",
+      "description": "(review_id, order_id) is unique and non-null in raw.order_reviews",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "pk_unique.products",
+      "kind": "invariant",
+      "category": "keys",
+      "description": "(product_id) is unique and non-null in raw.products",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "pk_unique.sellers",
+      "kind": "invariant",
+      "category": "keys",
+      "description": "(seller_id) is unique and non-null in raw.sellers",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "pk_unique.product_category_name_translation",
+      "kind": "invariant",
+      "category": "keys",
+      "description": "(product_category_name) is unique and non-null in raw.product_category_name_translation",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "fk.orders.customer_id->customers",
+      "kind": "invariant",
+      "category": "referential_integrity",
+      "description": "every raw.orders.customer_id exists in raw.customers.customer_id",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "fk.order_items.order_id->orders",
+      "kind": "invariant",
+      "category": "referential_integrity",
+      "description": "every raw.order_items.order_id exists in raw.orders.order_id",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "fk.order_items.product_id->products",
+      "kind": "invariant",
+      "category": "referential_integrity",
+      "description": "every raw.order_items.product_id exists in raw.products.product_id",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "fk.order_items.seller_id->sellers",
+      "kind": "invariant",
+      "category": "referential_integrity",
+      "description": "every raw.order_items.seller_id exists in raw.sellers.seller_id",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "fk.order_payments.order_id->orders",
+      "kind": "invariant",
+      "category": "referential_integrity",
+      "description": "every raw.order_payments.order_id exists in raw.orders.order_id",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "fk.order_reviews.order_id->orders",
+      "kind": "invariant",
+      "category": "referential_integrity",
+      "description": "every raw.order_reviews.order_id exists in raw.orders.order_id",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "grain.customer_id_one_order",
+      "kind": "invariant",
+      "category": "grain",
+      "description": "customer_id is per-order: every customers.customer_id appears in exactly one order",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "range.review_score_1_5",
+      "kind": "invariant",
+      "category": "validity",
+      "description": "review_score is between 1 and 5",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "range.price_positive",
+      "kind": "invariant",
+      "category": "validity",
+      "description": "order_items.price > 0",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "range.freight_non_negative",
+      "kind": "invariant",
+      "category": "validity",
+      "description": "order_items.freight_value >= 0",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "range.payment_value_non_negative",
+      "kind": "invariant",
+      "category": "validity",
+      "description": "order_payments.payment_value >= 0",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "time.purchase_not_null",
+      "kind": "invariant",
+      "category": "timestamps",
+      "description": "every order has a purchase timestamp",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "time.delivered_after_purchase",
+      "kind": "invariant",
+      "category": "timestamps",
+      "description": "customer delivery is never before purchase",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "id": "dup.review_id_across_orders",
+      "kind": "observation",
+      "category": "keys",
+      "description": "review_ids that appear on more than one order",
+      "value": 789,
+      "passed": null
+    },
+    {
+      "id": "grain.orders_with_multiple_reviews",
+      "kind": "observation",
+      "category": "grain",
+      "description": "orders with more than one review row",
+      "value": 547,
+      "passed": null
+    },
+    {
+      "id": "grain.orders_with_multiple_payments",
+      "kind": "observation",
+      "category": "grain",
+      "description": "orders with more than one payment row",
+      "value": 2961,
+      "passed": null
+    },
+    {
+      "id": "grain.max_payment_rows_per_order",
+      "kind": "observation",
+      "category": "grain",
+      "description": "maximum payment rows for a single order",
+      "value": 29,
+      "passed": null
+    },
+    {
+      "id": "grain.orders_with_multiple_items",
+      "kind": "observation",
+      "category": "grain",
+      "description": "orders with more than one item row",
+      "value": 9803,
+      "passed": null
+    },
+    {
+      "id": "grain.max_items_per_order",
+      "kind": "observation",
+      "category": "grain",
+      "description": "maximum item rows for a single order",
+      "value": 21,
+      "passed": null
+    },
+    {
+      "id": "grain.orders_with_multiple_sellers",
+      "kind": "observation",
+      "category": "grain",
+      "description": "orders whose items come from more than one seller",
+      "value": 1278,
+      "passed": null
+    },
+    {
+      "id": "grain.customer_unique_id_multiple_customer_ids",
+      "kind": "observation",
+      "category": "grain",
+      "description": "customer_unique_ids (people) mapped to more than one customer_id (order-level id)",
+      "value": 2997,
+      "passed": null
+    },
+    {
+      "id": "grain.distinct_customer_unique_id",
+      "kind": "observation",
+      "category": "grain",
+      "description": "distinct customer_unique_id values",
+      "value": 96096,
+      "passed": null
+    },
+    {
+      "id": "grain.geolocation_rows_per_zip_prefix_max",
+      "kind": "observation",
+      "category": "grain",
+      "description": "max geolocation rows sharing one ZIP prefix",
+      "value": 1146,
+      "passed": null
+    },
+    {
+      "id": "grain.geolocation_distinct_zip_prefix",
+      "kind": "observation",
+      "category": "grain",
+      "description": "distinct ZIP prefixes in geolocation",
+      "value": 19015,
+      "passed": null
+    },
+    {
+      "id": "grain.geolocation_zip_prefix_multiple_states",
+      "kind": "observation",
+      "category": "grain",
+      "description": "ZIP prefixes mapped to more than one state",
+      "value": 8,
+      "passed": null
+    },
+    {
+      "id": "ri.orders_without_items",
+      "kind": "observation",
+      "category": "referential_integrity",
+      "description": "orders with no order_items rows",
+      "value": 775,
+      "passed": null
+    },
+    {
+      "id": "ri.orders_without_payments",
+      "kind": "observation",
+      "category": "referential_integrity",
+      "description": "orders with no payment rows",
+      "value": 1,
+      "passed": null
+    },
+    {
+      "id": "ri.orders_without_reviews",
+      "kind": "observation",
+      "category": "referential_integrity",
+      "description": "orders with no review rows",
+      "value": 768,
+      "passed": null
+    },
+    {
+      "id": "ri.customer_zip_not_in_geolocation",
+      "kind": "observation",
+      "category": "referential_integrity",
+      "description": "customers whose ZIP prefix is absent from geolocation",
+      "value": 278,
+      "passed": null
+    },
+    {
+      "id": "ri.seller_zip_not_in_geolocation",
+      "kind": "observation",
+      "category": "referential_integrity",
+      "description": "sellers whose ZIP prefix is absent from geolocation",
+      "value": 7,
+      "passed": null
+    },
+    {
+      "id": "ri.product_category_missing_translation",
+      "kind": "observation",
+      "category": "referential_integrity",
+      "description": "distinct non-null categories without English translation",
+      "value": 2,
+      "passed": null
+    },
+    {
+      "id": "null.product_category",
+      "kind": "observation",
+      "category": "missing_values",
+      "description": "products with NULL category",
+      "value": 610,
+      "passed": null
+    },
+    {
+      "id": "consistency.payment_vs_items_mismatch_orders",
+      "kind": "observation",
+      "category": "consistency",
+      "description": "orders (with both items and payments) where sum(payment_value) differs from sum(price+freight) by more than 0.01",
+      "value": 303,
+      "passed": null
+    },
+    {
+      "id": "consistency.zero_value_payments",
+      "kind": "observation",
+      "category": "consistency",
+      "description": "payment rows with payment_value = 0",
+      "value": 9,
+      "passed": null
+    },
+    {
+      "id": "consistency.payment_type_not_defined",
+      "kind": "observation",
+      "category": "consistency",
+      "description": "payment rows with payment_type = 'not_defined'",
+      "value": 3,
+      "passed": null
+    },
+    {
+      "id": "consistency.zero_installments",
+      "kind": "observation",
+      "category": "consistency",
+      "description": "payment rows with payment_installments = 0",
+      "value": 2,
+      "passed": null
+    },
+    {
+      "id": "status.delivered_without_delivery_date",
+      "kind": "observation",
+      "category": "timestamps",
+      "description": "status 'delivered' but no customer delivery date",
+      "value": 8,
+      "passed": null
+    },
+    {
+      "id": "status.not_delivered_with_delivery_date",
+      "kind": "observation",
+      "category": "timestamps",
+      "description": "status other than 'delivered' but has a delivery date",
+      "value": 6,
+      "passed": null
+    },
+    {
+      "id": "time.carrier_before_purchase",
+      "kind": "observation",
+      "category": "timestamps",
+      "description": "carrier handoff timestamp earlier than purchase timestamp",
+      "value": 166,
+      "passed": null
+    },
+    {
+      "id": "time.carrier_before_approval",
+      "kind": "observation",
+      "category": "timestamps",
+      "description": "carrier handoff timestamp earlier than approval timestamp",
+      "value": 1359,
+      "passed": null
+    },
+    {
+      "id": "time.delivered_before_carrier",
+      "kind": "observation",
+      "category": "timestamps",
+      "description": "customer delivery earlier than carrier handoff",
+      "value": 23,
+      "passed": null
+    },
+    {
+      "id": "time.max_purchase_date_epoch",
+      "kind": "observation",
+      "category": "timestamps",
+      "description": "latest purchase timestamp (epoch seconds) - the dataset 'as-of' date",
+      "value": 1539797418,
+      "passed": null
+    },
+    {
+      "id": "outlier.items_price_above_p99_9",
+      "kind": "observation",
+      "category": "outliers",
+      "description": "item rows with price above the 99.9th percentile",
+      "value": 105,
+      "passed": null
+    },
+    {
+      "id": "outlier.freight_exceeds_price",
+      "kind": "observation",
+      "category": "outliers",
+      "description": "item rows where freight_value exceeds price",
+      "value": 4124,
+      "passed": null
+    },
+    {
+      "id": "fanout.naive_payment_item_review_join_inflation_cents",
+      "kind": "observation",
+      "category": "fanout",
+      "description": "inflation (in cents) of sum(payment_value) when payments are naively joined to items and reviews",
+      "value": 440797042,
+      "passed": null
+    }
+  ],
+  "profile": {
+    "customers": {
+      "rows": 99441,
+      "columns": {
+        "customer_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 97769
+        },
+        "customer_unique_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 98358
+        },
+        "customer_zip_code_prefix": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 15086
+        },
+        "customer_city": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 4186
+        },
+        "customer_state": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 26
+        }
+      }
+    },
+    "geolocation": {
+      "rows": 1000163,
+      "columns": {
+        "geolocation_zip_code_prefix": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 19365
+        },
+        "geolocation_lat": {
+          "type": "DOUBLE",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 727986,
+          "min": "-36.6053744107061",
+          "max": "45.06593318269697"
+        },
+        "geolocation_lng": {
+          "type": "DOUBLE",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 706899,
+          "min": "-101.46676644931476",
+          "max": "121.10539381057764"
+        },
+        "geolocation_city": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 7782
+        },
+        "geolocation_state": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 26
+        }
+      }
+    },
+    "order_items": {
+      "rows": 112650,
+      "columns": {
+        "order_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 98921
+        },
+        "order_item_id": {
+          "type": "INTEGER",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 21,
+          "min": "1",
+          "max": "21"
+        },
+        "product_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 32523
+        },
+        "seller_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 3080
+        },
+        "shipping_limit_date": {
+          "type": "TIMESTAMP",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 89981,
+          "min": "2016-09-19 00:15:34",
+          "max": "2020-04-09 22:35:08"
+        },
+        "price": {
+          "type": "DECIMAL(12,2)",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 6029,
+          "min": "0.85",
+          "max": "6735.00"
+        },
+        "freight_value": {
+          "type": "DECIMAL(12,2)",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 6772,
+          "min": "0.00",
+          "max": "409.68"
+        }
+      }
+    },
+    "order_payments": {
+      "rows": 103886,
+      "columns": {
+        "order_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 99974
+        },
+        "payment_sequential": {
+          "type": "INTEGER",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 29,
+          "min": "1",
+          "max": "29"
+        },
+        "payment_type": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 5
+        },
+        "payment_installments": {
+          "type": "INTEGER",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 24,
+          "min": "0",
+          "max": "24"
+        },
+        "payment_value": {
+          "type": "DECIMAL(12,2)",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 28934,
+          "min": "0.00",
+          "max": "13664.08"
+        }
+      }
+    },
+    "order_reviews": {
+      "rows": 99224,
+      "columns": {
+        "review_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 97803
+        },
+        "order_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 99168
+        },
+        "review_score": {
+          "type": "INTEGER",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 5,
+          "min": "1",
+          "max": "5"
+        },
+        "review_comment_title": {
+          "type": "VARCHAR",
+          "nulls": 87656,
+          "null_pct": 88.342,
+          "approx_distinct": 4538
+        },
+        "review_comment_message": {
+          "type": "VARCHAR",
+          "nulls": 58247,
+          "null_pct": 58.703,
+          "approx_distinct": 36834
+        },
+        "review_creation_date": {
+          "type": "TIMESTAMP",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 623,
+          "min": "2016-10-02 00:00:00",
+          "max": "2018-08-31 00:00:00"
+        },
+        "review_answer_timestamp": {
+          "type": "TIMESTAMP",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 101131,
+          "min": "2016-10-07 18:32:28",
+          "max": "2018-10-29 12:27:35"
+        }
+      }
+    },
+    "orders": {
+      "rows": 99441,
+      "columns": {
+        "order_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 99974
+        },
+        "customer_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 97769
+        },
+        "order_status": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 8
+        },
+        "order_purchase_timestamp": {
+          "type": "TIMESTAMP",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 96571,
+          "min": "2016-09-04 21:15:19",
+          "max": "2018-10-17 17:30:18"
+        },
+        "order_approved_at": {
+          "type": "TIMESTAMP",
+          "nulls": 160,
+          "null_pct": 0.161,
+          "approx_distinct": 87279,
+          "min": "2016-09-15 12:16:38",
+          "max": "2018-09-03 17:40:06"
+        },
+        "order_delivered_carrier_date": {
+          "type": "TIMESTAMP",
+          "nulls": 1783,
+          "null_pct": 1.793,
+          "approx_distinct": 81859,
+          "min": "2016-10-08 10:34:01",
+          "max": "2018-09-11 19:48:28"
+        },
+        "order_delivered_customer_date": {
+          "type": "TIMESTAMP",
+          "nulls": 2965,
+          "null_pct": 2.982,
+          "approx_distinct": 93526,
+          "min": "2016-10-11 13:46:32",
+          "max": "2018-10-17 13:22:46"
+        },
+        "order_estimated_delivery_date": {
+          "type": "TIMESTAMP",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 451,
+          "min": "2016-09-30 00:00:00",
+          "max": "2018-11-12 00:00:00"
+        }
+      }
+    },
+    "products": {
+      "rows": 32951,
+      "columns": {
+        "product_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 32523
+        },
+        "product_category_name": {
+          "type": "VARCHAR",
+          "nulls": 610,
+          "null_pct": 1.851,
+          "approx_distinct": 71
+        },
+        "product_name_lenght": {
+          "type": "INTEGER",
+          "nulls": 610,
+          "null_pct": 1.851,
+          "approx_distinct": 66,
+          "min": "5",
+          "max": "76"
+        },
+        "product_description_lenght": {
+          "type": "INTEGER",
+          "nulls": 610,
+          "null_pct": 1.851,
+          "approx_distinct": 2902,
+          "min": "4",
+          "max": "3992"
+        },
+        "product_photos_qty": {
+          "type": "INTEGER",
+          "nulls": 610,
+          "null_pct": 1.851,
+          "approx_distinct": 19,
+          "min": "1",
+          "max": "20"
+        },
+        "product_weight_g": {
+          "type": "INTEGER",
+          "nulls": 2,
+          "null_pct": 0.006,
+          "approx_distinct": 2234,
+          "min": "0",
+          "max": "40425"
+        },
+        "product_length_cm": {
+          "type": "INTEGER",
+          "nulls": 2,
+          "null_pct": 0.006,
+          "approx_distinct": 100,
+          "min": "7",
+          "max": "105"
+        },
+        "product_height_cm": {
+          "type": "INTEGER",
+          "nulls": 2,
+          "null_pct": 0.006,
+          "approx_distinct": 103,
+          "min": "2",
+          "max": "105"
+        },
+        "product_width_cm": {
+          "type": "INTEGER",
+          "nulls": 2,
+          "null_pct": 0.006,
+          "approx_distinct": 95,
+          "min": "6",
+          "max": "118"
+        }
+      }
+    },
+    "sellers": {
+      "rows": 3095,
+      "columns": {
+        "seller_id": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 3080
+        },
+        "seller_zip_code_prefix": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 2276
+        },
+        "seller_city": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 604
+        },
+        "seller_state": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 22
+        }
+      }
+    },
+    "product_category_name_translation": {
+      "rows": 71,
+      "columns": {
+        "product_category_name": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 69
+        },
+        "product_category_name_english": {
+          "type": "VARCHAR",
+          "nulls": 0,
+          "null_pct": 0.0,
+          "approx_distinct": 73
+        }
+      }
+    }
+  }
+}
