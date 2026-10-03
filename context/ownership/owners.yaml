@@ -1,0 +1,42 @@
+# Owners, stewards and authors referenced by context documents.
+#
+# IMPORTANT: no real people are recorded here. The team entries are PLACEHOLDERS that a human
+# administrator must replace with real teams/people before anything can be certified as verified.
+# Validation rejects `verified` objects whose owner is a placeholder, and rejects certifiers that
+# are not non-placeholder humans with can_certify: true. See docs/certification_procedure.md.
+items:
+  - id: agent.claude_code
+    kind: agent
+    name: Claude Code (AI coding agent)
+    can_certify: false
+    notes: Authored the initial Phase 1 drafts from profiling evidence. May propose, never certify.
+
+  - id: team.data_platform
+    kind: team
+    name: Data Platform (placeholder)
+    placeholder: true
+    notes: Owns ingestion, warehouse build, and raw/serving physical assets.
+
+  - id: team.commerce_analytics
+    kind: team
+    name: Commerce Analytics (placeholder)
+    placeholder: true
+    notes: Intended owner of order, sales and payment definitions.
+
+  - id: team.logistics_analytics
+    kind: team
+    name: Logistics Analytics (placeholder)
+    placeholder: true
+    notes: Intended owner of delivery and fulfilment definitions.
+
+  - id: team.customer_experience
+    kind: team
+    name: Customer Experience (placeholder)
+    placeholder: true
+    notes: Intended owner of review and satisfaction definitions.
+
+  - id: team.data_governance
+    kind: team
+    name: Data Governance (placeholder)
+    placeholder: true
+    notes: Owns policy, sensitivity classification and decisions on ambiguous concepts.

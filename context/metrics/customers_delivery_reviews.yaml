@@ -1,0 +1,164 @@
+items:
+  - id: metric.distinct_customers
+    name: Distinct customers
+    synonyms: [unique customers, number of customers, purchasing customers]
+    definition: Count of distinct people (customer_unique_key) with at least one order of any status.
+    business_purpose: Size of the purchasing customer base.
+    sql: |
+      SELECT count(DISTINCT customer_unique_key) AS distinct_customers
+      FROM analytics.orders
+    aggregation_grain: person (customer_unique_key)
+    timestamp: &purchase_ts
+      column: analytics.orders.order_purchase_timestamp
+      meaning: when the customer placed the order
+      timezone: unspecified (assumed Brazil local time)
+      timezone_basis: The source documentation does not state a time zone; UNVERIFIED assumption.
+    exclusions: ["customer_key is NOT used: it is per-order and would count 99,441 'customers'"]
+    supported_dimensions:
+      - {name: purchase_month, expression: "date_trunc('month', orders.order_purchase_timestamp)", asset: asset.analytics.orders}
+      - {name: customer_state, expression: customers.customer_state, asset: asset.analytics.customers}
+    assets: [asset.analytics.orders]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 96,096 (vs 99,441 customer_key)"]}
+    double_counting_check: count(DISTINCT customer_unique_key).
+    known_issues: ["A person who moved could in principle have multiple customer_unique_ids; not detectable."]
+
+  - id: metric.repeat_customer_rate
+    name: Repeat customer rate
+    synonyms: [returning customer rate, repeat purchase rate]
+    definition: >
+      Share of distinct customers (customer_unique_key) with 2 or more distinct orders of any status
+      over the whole selected window.
+    business_purpose: Customer retention signal.
+    sql: |
+      WITH per_customer AS (
+        SELECT customer_unique_key, count(DISTINCT order_id) AS orders
+        FROM analytics.orders
+        GROUP BY customer_unique_key
+      )
+      SELECT count(*) FILTER (WHERE orders >= 2) * 1.0 / count(*) AS repeat_customer_rate
+      FROM per_customer
+    numerator: {description: customers with >= 2 orders, expression: "count(*) FILTER (WHERE orders >= 2)"}
+    denominator: {description: customers with >= 1 order, expression: "count(*)"}
+    aggregation_grain: person
+    timestamp: *purchase_ts
+    inclusions: [orders of all statuses]
+    exclusions: []
+    depends_on: [metric.distinct_customers]
+    assets: [asset.analytics.orders]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: "Status filter and window are open decisions; see unsupported.active_customer."}
+    version: 1
+    provenance:
+      authored_by: agent.claude_code
+      authored_at: 2026-11-19
+      generated_by: ai
+      evidence: ["executed 2026-11-19: 2,997 / 96,096 = 0.03119", "excluding canceled+unavailable orders gives 2,888 / 94,990"]
+    assumptions: ["Two orders on the same day count as repeat."]
+    double_counting_check: grouped to one row per customer_unique_key before counting.
+    known_issues: ["Result depends on the status filter (0.0312 all statuses vs 0.0304 excluding canceled/unavailable)."]
+
+  - id: metric.average_delivery_days
+    name: Average delivery time (days)
+    synonyms: [delivery time, average delivery days, lead time, shipping time]
+    definition: >
+      Mean of (order_delivered_customer_date - order_purchase_timestamp) in days, for delivered
+      orders that have a delivery timestamp.
+    business_purpose: Customer-perceived fulfilment speed.
+    sql: |
+      SELECT avg(date_diff('second', order_purchase_timestamp, order_delivered_customer_date)) / 86400.0
+               AS average_delivery_days
+      FROM analytics.orders
+      WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL
+    aggregation_grain: order
+    required_filters: ["order_status = 'delivered'", "order_delivered_customer_date IS NOT NULL"]
+    timestamp: *purchase_ts
+    exclusions: ["8 delivered orders without a delivery date"]
+    supported_dimensions:
+      - {name: purchase_month, expression: "date_trunc('month', orders.order_purchase_timestamp)", asset: asset.analytics.orders}
+      - {name: customer_state, expression: customers.customer_state, asset: asset.analytics.customers}
+    assets: [asset.analytics.orders]
+    owner: team.logistics_analytics
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 12.558 days"]}
+    double_counting_check: single table at order grain.
+
+  - id: metric.on_time_delivery_rate
+    name: On-time delivery rate
+    synonyms: [on time rate, delivered on time, otd]
+    definition: >
+      Among delivered orders with a delivery timestamp, share whose delivery DATE is on or before
+      the estimated delivery DATE.
+    business_purpose: Reliability of the delivery promise.
+    sql: |
+      SELECT count(*) FILTER (
+               WHERE CAST(order_delivered_customer_date AS DATE) <= CAST(order_estimated_delivery_date AS DATE)
+             ) * 1.0 / count(*) AS on_time_delivery_rate
+      FROM analytics.orders
+      WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL
+    numerator: {description: delivered on or before estimated date, expression: "count(*) FILTER (WHERE CAST(delivered AS DATE) <= CAST(estimated AS DATE))"}
+    denominator: {description: delivered orders with delivery date, expression: "count(*)"}
+    aggregation_grain: order
+    required_filters: ["order_status = 'delivered'", "order_delivered_customer_date IS NOT NULL"]
+    timestamp: *purchase_ts
+    assets: [asset.analytics.orders]
+    owner: team.logistics_analytics
+    certification: {status: draft, notes: "Date-level vs timestamp-level comparison is an assumption needing review."}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 0.93227 over 96,470 orders", "order_estimated_delivery_date always has a 00:00:00 time component (0 exceptions)"]}
+    assumptions: ["Because the estimate has date precision only, comparison is done at date level."]
+    double_counting_check: single table at order grain.
+
+  - id: metric.average_review_score
+    name: Average review score
+    synonyms: [review score, customer satisfaction score, csat, rating]
+    definition: >
+      Mean over reviewed orders of the order's mean review_score (each order weighted once, even when
+      it has several review rows).
+    business_purpose: Customer satisfaction.
+    sql: |
+      SELECT avg(review_score_mean) AS average_review_score
+      FROM analytics.order_review_summary
+    aggregation_grain: order (pre-aggregated in analytics.order_review_summary)
+    timestamp:
+      column: analytics.orders.order_purchase_timestamp
+      meaning: attributed to order purchase time via order_id (review_answer_timestamp is an alternative needing a decision)
+      timezone: unspecified (assumed Brazil local time)
+      timezone_basis: The source documentation does not state a time zone; UNVERIFIED assumption.
+    exclusions: ["768 orders without any review"]
+    supported_dimensions:
+      - {name: purchase_month, expression: "date_trunc('month', orders.order_purchase_timestamp)", asset: asset.analytics.orders}
+      - {name: order_status, expression: orders.order_status, asset: asset.analytics.orders}
+    assets: [asset.analytics.order_review_summary]
+    owner: team.customer_experience
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 4.0868 (order-weighted) vs 4.0864 (review-row-weighted)"]}
+    double_counting_check: order_review_summary is one row per order_id.
+
+  - id: metric.active_seller_count
+    name: Sellers with sales
+    synonyms: [active sellers, selling sellers, number of sellers]
+    definition: Distinct seller_id with at least one order item row in the selected window.
+    business_purpose: Supply-side breadth.
+    sql: |
+      SELECT count(DISTINCT seller_id) AS active_seller_count
+      FROM analytics.order_items
+    aggregation_grain: seller
+    timestamp:
+      column: analytics.orders.order_purchase_timestamp
+      meaning: order purchase time via order_items.order_id
+      timezone: unspecified (assumed Brazil local time)
+      timezone_basis: The source documentation does not state a time zone; UNVERIFIED assumption.
+    supported_dimensions:
+      - {name: seller_state, expression: sellers.seller_state, asset: asset.analytics.sellers}
+      - {name: purchase_month, expression: "date_trunc('month', orders.order_purchase_timestamp)", asset: asset.analytics.orders}
+    assets: [asset.analytics.order_items]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: "'Active' here means 'had a sale in the window'; the window must be chosen by the caller."}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 3,095 over the full dataset"]}
+    double_counting_check: count(DISTINCT seller_id).

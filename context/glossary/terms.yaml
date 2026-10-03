@@ -1,0 +1,196 @@
+items:
+  - id: term.order
+    name: Order
+    synonyms: [purchase, pedido]
+    definition: A purchase placed by a customer on the Olist Store, identified by order_id. It may contain several items from several sellers.
+    business_interpretation: The unit of demand. Count with count(DISTINCT order_id).
+    domain: commerce.orders
+    owner: team.commerce_analytics
+    assets: [asset.analytics.orders]
+    columns: ["asset.analytics.orders:order_id"]
+    metrics: [metric.order_count]
+    ambiguities: ["Whether canceled/unavailable orders count as 'orders' depends on the question."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: [Kaggle dataset description]}
+
+  - id: term.order_status
+    name: Order status
+    synonyms: [status, order state]
+    definition: "Lifecycle state of an order. Observed values: delivered, shipped, canceled, unavailable, invoiced, processing, created, approved."
+    business_interpretation: A snapshot status at extraction time; there is no status history.
+    domain: commerce.orders
+    owner: team.commerce_analytics
+    columns: ["asset.analytics.orders:order_status"]
+    ambiguities: ["'unavailable' is not documented by the source."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.delivered_order
+    name: Delivered order
+    synonyms: [completed order, fulfilled order]
+    definition: An order with order_status = 'delivered'.
+    domain: commerce.orders
+    owner: team.logistics_analytics
+    metrics: [metric.delivered_order_count, metric.on_time_delivery_rate, metric.average_delivery_days]
+    ambiguities: ["8 delivered orders have no delivery date; 6 non-delivered orders have one."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.canceled_order
+    name: Canceled order
+    synonyms: [cancelled order, cancellation]
+    definition: An order with order_status = 'canceled' (American spelling in source).
+    domain: commerce.orders
+    owner: team.commerce_analytics
+    metrics: [metric.canceled_order_count, metric.cancellation_rate]
+    exclusions: ["'unavailable' is a different status and is not included."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.customer
+    name: Customer
+    synonyms: [buyer, client, shopper, consumer]
+    definition: A person who placed at least one order, identified by customer_unique_key (pseudonym of customer_unique_id).
+    business_interpretation: The source issues a new customer_id for every order. customer_key therefore identifies an order-customer record, not a person.
+    domain: commerce.customers
+    owner: team.commerce_analytics
+    assets: [asset.analytics.customers, asset.analytics.orders]
+    columns: ["asset.analytics.orders:customer_unique_key", "asset.analytics.customers:customer_unique_key"]
+    metrics: [metric.distinct_customers, metric.repeat_customer_rate]
+    ambiguities: ["'Active' customer has no defined window - see unsupported.active_customer."]
+    exclusions: ["Never count customer_key to count people (99,441 vs 96,096)."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["grain.distinct_customer_unique_id = 96,096"]}
+
+  - id: term.repeat_customer
+    name: Repeat customer
+    synonyms: [returning customer, repeat buyer, loyal customer]
+    definition: A customer (customer_unique_key) with two or more distinct orders in the window considered.
+    domain: commerce.customers
+    owner: team.commerce_analytics
+    metrics: [metric.repeat_customer_rate]
+    ambiguities: ["Whether canceled/unavailable orders count toward the 2 orders."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.seller
+    name: Seller
+    synonyms: [merchant, vendor, store, lojista]
+    definition: A merchant selling through Olist who fulfils one or more order items (seller_id).
+    domain: commerce.sellers
+    owner: team.commerce_analytics
+    assets: [asset.analytics.sellers]
+    metrics: [metric.active_seller_count]
+    ambiguities: ["Order-level outcomes (payment, review) cannot be attributed to one seller for multi-seller orders."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.order_item
+    name: Order item
+    synonyms: [line item, item, basket item]
+    definition: One unit of a product within an order (order_id, order_item_id). Quantity is expressed by repeated rows.
+    domain: commerce.sales
+    owner: team.commerce_analytics
+    assets: [asset.analytics.order_items]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.product_category
+    name: Product category
+    synonyms: [category, department, product type]
+    definition: Category of a product - Portuguese product_category_name, with the English name in product_category_name_english.
+    domain: commerce.catalog
+    owner: team.commerce_analytics
+    columns: ["asset.analytics.products:product_category_name", "asset.analytics.products:product_category_name_english"]
+    ambiguities: ["610 products have no category; 2 categories have no English translation."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.freight
+    name: Freight value
+    synonyms: [shipping fee, delivery fee, frete]
+    definition: Freight amount charged and allocated to each order item (order_items.freight_value).
+    domain: commerce.sales
+    owner: team.logistics_analytics
+    metrics: [metric.freight_value_total]
+    exclusions: ["Not a logistics cost to Olist; costs are not in the data."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.payment
+    name: Payment
+    synonyms: [payment row, payment instrument]
+    definition: One payment instrument applied to an order (order_payments row). Orders may have several.
+    domain: commerce.payments
+    owner: team.commerce_analytics
+    assets: [asset.analytics.order_payments, asset.analytics.order_payment_totals]
+    metrics: [metric.payment_value_total]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.voucher
+    name: Voucher
+    synonyms: [gift card, coupon]
+    definition: Payment type 'voucher' - recorded as a payment instrument, not a discount.
+    domain: commerce.payments
+    owner: team.commerce_analytics
+    columns: ["asset.analytics.order_payments:payment_type"]
+    ambiguities: ["Whether vouchers should be treated as discounts for any revenue concept is undecided."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.boleto
+    name: Boleto
+    synonyms: [boleto bancario, bank slip]
+    definition: Payment type 'boleto' - a Brazilian bank payment slip.
+    domain: commerce.payments
+    owner: team.commerce_analytics
+    columns: ["asset.analytics.order_payments:payment_type"]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.review_score
+    name: Review score
+    synonyms: [satisfaction score, rating, stars, nota]
+    definition: Customer satisfaction score 1-5 from the post-delivery survey.
+    domain: customer_experience.reviews
+    owner: team.customer_experience
+    columns: ["asset.analytics.order_reviews:review_score"]
+    metrics: [metric.average_review_score]
+    ambiguities: ["547 orders have multiple reviews; aggregation can be order- or review-weighted."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.delivery_delay
+    name: Delivery delay
+    synonyms: [late delivery, delay, atraso]
+    definition: Days by which the customer delivery date exceeds the estimated delivery date (delivered orders with a delivery date).
+    domain: logistics.delivery
+    owner: team.logistics_analytics
+    columns: ["asset.analytics.orders:order_delivered_customer_date", "asset.analytics.orders:order_estimated_delivery_date"]
+    metrics: [metric.on_time_delivery_rate]
+    ambiguities: ["Estimate has date precision only; compare at date level."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.purchase_timestamp
+    name: Purchase timestamp
+    synonyms: [order date, purchase date, order time]
+    definition: order_purchase_timestamp - when the customer placed the order. Default time attribution for order-based metrics.
+    domain: commerce.orders
+    owner: team.commerce_analytics
+    columns: ["asset.analytics.orders:order_purchase_timestamp"]
+    ambiguities: ["Time zone not documented by the source."]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: term.dataset_as_of_date
+    name: Dataset as-of date
+    synonyms: [data end date, snapshot date, latest date]
+    definition: The data is a historical snapshot; the last purchase timestamp is 2018-10-17 17:30:18.
+    business_interpretation: Anchor "recent" or "last N days" questions to this date, never to the current date.
+    domain: reference.time
+    owner: team.data_platform
+    columns: ["asset.analytics.orders:order_purchase_timestamp"]
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["time.max_purchase_date_epoch = 1539797418"]}

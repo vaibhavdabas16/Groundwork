@@ -1,0 +1,138 @@
+items:
+  - id: asset.analytics.customers
+    name: Customers (order-level customer records)
+    layer: serving
+    database: olist_serving
+    schema: analytics
+    table: customers
+    description: >
+      Customer records as issued per order. The source issues a new customer_id for every order, so
+      this table has one row per order-customer, not one per person. Use customer_unique_key for people.
+      ZIP code prefix is withheld (quasi-identifier).
+    grain: one row per customer_key (99,441 rows; 96,096 distinct customer_unique_key)
+    domain: commerce.customers
+    owner: team.commerce_analytics
+    steward: team.data_platform
+    sensitivity: pseudonymous
+    primary_key: [customer_key]
+    columns:
+      - {name: customer_key, data_type: VARCHAR, description: "Pseudonym of customer_id (order-level).", sensitivity: pseudonymous, nullable: false}
+      - {name: customer_unique_key, data_type: VARCHAR, description: "Pseudonym of customer_unique_id (person-level). 2,997 people have more than one customer_key.", sensitivity: pseudonymous}
+      - {name: customer_city, data_type: VARCHAR, description: Customer city (lower-case Portuguese spelling as in source)., sensitivity: internal}
+      - {name: customer_state, data_type: VARCHAR, description: Two-letter Brazilian state code (UF)., sensitivity: internal}
+    certification: {status: draft, notes: AI-proposed from profiling evidence; awaiting human review.}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: [data/manifests/dq_report.json]}
+    quality_warnings:
+      - {id: qw.customers.per_order_id, description: "customer_key is per order; counting it counts orders, not people.", check_ref: grain.customer_id_one_order}
+    lineage: {sources: [asset.raw.customers], transformation: "identifiers pseudonymised; customer_zip_code_prefix dropped."}
+    metrics: [metric.distinct_customers, metric.repeat_customer_rate]
+    tags: [customer, buyer, client, state, city]
+
+  - id: asset.analytics.products
+    name: Products
+    layer: serving
+    database: olist_serving
+    schema: analytics
+    table: products
+    description: >
+      Product catalogue attributes with the English category name joined in. Column names keep the
+      source typos (product_name_lenght, product_description_lenght).
+    grain: one row per product_id (32,951 rows)
+    domain: commerce.catalog
+    owner: team.commerce_analytics
+    steward: team.data_platform
+    sensitivity: internal
+    primary_key: [product_id]
+    columns:
+      - {name: product_id, data_type: VARCHAR, description: Product identifier., sensitivity: internal, nullable: false}
+      - {name: product_category_name, data_type: VARCHAR, description: "Category in Portuguese. NULL for 610 products.", sensitivity: internal}
+      - {name: product_name_lenght, data_type: INTEGER, description: "Number of characters in the product name (source spelling 'lenght').", sensitivity: internal}
+      - {name: product_description_lenght, data_type: INTEGER, description: Number of characters in the product description., sensitivity: internal}
+      - {name: product_photos_qty, data_type: INTEGER, description: Number of published photos., sensitivity: internal}
+      - {name: product_weight_g, data_type: INTEGER, description: Weight in grams., sensitivity: internal}
+      - {name: product_length_cm, data_type: INTEGER, description: Length in cm., sensitivity: internal}
+      - {name: product_height_cm, data_type: INTEGER, description: Height in cm., sensitivity: internal}
+      - {name: product_width_cm, data_type: INTEGER, description: Width in cm., sensitivity: internal}
+      - {name: product_category_name_english, data_type: VARCHAR, description: "English category name from the translation table. NULL when category is NULL or untranslated (pc_gamer, portateis_cozinha_e_preparadores_de_alimentos).", sensitivity: internal}
+    certification: {status: draft, notes: AI-proposed from profiling evidence; awaiting human review.}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: [data/manifests/dq_report.json]}
+    quality_warnings:
+      - {id: qw.products.null_category, description: 610 products have no category., check_ref: null.product_category}
+      - {id: qw.products.untranslated, description: 2 categories have no English translation., check_ref: ri.product_category_missing_translation}
+    lineage: {sources: [asset.raw.products, asset.raw.product_category_name_translation], transformation: LEFT JOIN translation on product_category_name.}
+    metrics: [metric.product_sales_value]
+    tags: [product, catalog, category, sku]
+
+  - id: asset.analytics.sellers
+    name: Sellers
+    layer: serving
+    database: olist_serving
+    schema: analytics
+    table: sellers
+    description: Marketplace sellers (merchants) who fulfil order items.
+    grain: one row per seller_id (3,095 rows)
+    domain: commerce.sellers
+    owner: team.commerce_analytics
+    steward: team.data_platform
+    sensitivity: internal
+    primary_key: [seller_id]
+    columns:
+      - {name: seller_id, data_type: VARCHAR, description: Seller identifier., sensitivity: internal, nullable: false}
+      - {name: seller_zip_code_prefix, data_type: VARCHAR, description: "First 5 digits of the seller's business ZIP code (7 not present in geolocation).", sensitivity: internal}
+      - {name: seller_city, data_type: VARCHAR, description: Seller city., sensitivity: internal}
+      - {name: seller_state, data_type: VARCHAR, description: Seller state (UF)., sensitivity: internal}
+    certification: {status: draft, notes: AI-proposed from profiling evidence; awaiting human review.}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: [data/manifests/dq_report.json]}
+    lineage: {sources: [asset.raw.sellers], transformation: copied 1:1.}
+    metrics: [metric.active_seller_count]
+    tags: [seller, merchant, vendor, supplier]
+
+  - id: asset.analytics.product_category_name_translation
+    name: Product category translation
+    layer: serving
+    database: olist_serving
+    schema: analytics
+    table: product_category_name_translation
+    description: Portuguese to English category name mapping (71 rows). Already joined into analytics.products.
+    grain: one row per product_category_name
+    domain: commerce.catalog
+    owner: team.commerce_analytics
+    sensitivity: internal
+    primary_key: [product_category_name]
+    columns:
+      - {name: product_category_name, data_type: VARCHAR, description: Portuguese category name., sensitivity: internal, nullable: false}
+      - {name: product_category_name_english, data_type: VARCHAR, description: English category name., sensitivity: internal}
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    lineage: {sources: [asset.raw.product_category_name_translation], transformation: copied 1:1.}
+    tags: [category, translation, english]
+
+  - id: asset.analytics.geolocation_zip_prefix
+    name: ZIP prefix geography
+    layer: serving
+    database: olist_serving
+    schema: analytics
+    table: geolocation_zip_prefix
+    description: >
+      Postal geography aggregated to one row per 5-digit ZIP prefix (raw geolocation has up to 1,146
+      points per prefix). Coordinates are medians rounded to 3 decimals. Customer ZIP prefixes are not
+      exposed in serving, so this table can only be joined to sellers.
+    grain: one row per zip_code_prefix (19,015 rows)
+    domain: reference.geography
+    owner: team.data_platform
+    sensitivity: internal
+    primary_key: [zip_code_prefix]
+    columns:
+      - {name: zip_code_prefix, data_type: VARCHAR, description: 5-digit ZIP code prefix (leading zeros preserved)., sensitivity: internal, nullable: false}
+      - {name: source_point_count, data_type: BIGINT, description: Number of raw geolocation rows for this prefix., sensitivity: internal}
+      - {name: distinct_state_count, data_type: BIGINT, description: "Distinct states in raw rows for this prefix (8 prefixes map to more than one).", sensitivity: internal}
+      - {name: state_mode, data_type: VARCHAR, description: Most frequent state for this prefix., sensitivity: internal}
+      - {name: city_mode, data_type: VARCHAR, description: Most frequent city spelling for this prefix., sensitivity: internal}
+      - {name: lat_median_3dp, data_type: DOUBLE, description: Median latitude rounded to 3 decimals., sensitivity: internal}
+      - {name: lng_median_3dp, data_type: DOUBLE, description: Median longitude rounded to 3 decimals., sensitivity: internal}
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: [data/manifests/dq_report.json]}
+    quality_warnings:
+      - {id: qw.geo.multi_state, description: 8 ZIP prefixes appear in more than one state in the source., check_ref: grain.geolocation_zip_prefix_multiple_states}
+    lineage: {sources: [asset.raw.geolocation], transformation: "GROUP BY zip prefix; mode() for city/state; median coordinates rounded to 3dp."}
+    tags: [geography, zip, cep, location]

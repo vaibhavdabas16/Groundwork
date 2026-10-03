@@ -1,0 +1,136 @@
+items:
+  - id: metric.product_sales_value
+    name: Product sales value
+    synonyms: [item sales, merchandise value, product revenue, sales value]
+    definition: Sum of order_items.price (BRL), excluding freight, across all item rows regardless of order status.
+    business_purpose: Value of merchandise sold through the marketplace.
+    sql: |
+      SELECT sum(price) AS product_sales_value
+      FROM analytics.order_items
+    aggregation_grain: order item (analytics.order_items)
+    timestamp:
+      column: analytics.orders.order_purchase_timestamp
+      meaning: attribute item value to the order's purchase time (join order_items.order_id = orders.order_id, many-to-one, no fanout)
+      timezone: unspecified (assumed Brazil local time)
+      timezone_basis: The source documentation does not state a time zone; UNVERIFIED assumption.
+    inclusions: [all item rows, all order statuses]
+    exclusions: [freight_value]
+    supported_dimensions: &item_dims
+      - {name: product_category, expression: products.product_category_name_english, asset: asset.analytics.products, join_path_note: "order_items.product_id = products.product_id (many-to-one)"}
+      - {name: seller_state, expression: sellers.seller_state, asset: asset.analytics.sellers, join_path_note: "order_items.seller_id = sellers.seller_id (many-to-one)"}
+      - {name: purchase_month, expression: "date_trunc('month', orders.order_purchase_timestamp)", asset: asset.analytics.orders, join_path_note: "order_items.order_id = orders.order_id (many-to-one)"}
+      - {name: customer_state, expression: customers.customer_state, asset: asset.analytics.customers, join_path_note: "via orders.customer_key (1:1)"}
+      - {name: order_status, expression: orders.order_status, asset: asset.analytics.orders}
+    assets: [asset.analytics.order_items]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: "Whether canceled/unavailable orders should be excluded needs a human decision."}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 13,591,643.70", "category and customer_state breakdowns reconcile to the same total"]}
+    assumptions: ["Each item row is quantity one (the source has no quantity column)."]
+    double_counting_check: >
+      Summed at item grain from a single table. Joins to products/sellers/orders/customers are
+      many-to-one and were verified to reconcile exactly to 13,591,643.70. Never join to
+      order_payments or order_reviews before summing.
+    known_issues: ["Includes items on canceled orders.", "No refund or return information exists."]
+
+  - id: metric.freight_value_total
+    name: Freight value
+    synonyms: [shipping value, freight, shipping cost charged]
+    definition: Sum of order_items.freight_value (BRL).
+    business_purpose: Freight charged to customers.
+    sql: |
+      SELECT sum(freight_value) AS freight_value_total
+      FROM analytics.order_items
+    aggregation_grain: order item
+    timestamp: &item_ts
+      column: analytics.orders.order_purchase_timestamp
+      meaning: order purchase time via order_items.order_id
+      timezone: unspecified (assumed Brazil local time)
+      timezone_basis: The source documentation does not state a time zone; UNVERIFIED assumption.
+    supported_dimensions: *item_dims
+    assets: [asset.analytics.order_items]
+    owner: team.logistics_analytics
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 2,251,909.54"]}
+    assumptions: ["freight_value is the amount charged, not Olist's logistics cost (cost is not in the data)."]
+    double_counting_check: item grain, single table.
+
+  - id: metric.items_gross_value
+    name: Items value including freight
+    synonyms: [price plus freight, item gross value]
+    definition: sum(price) + sum(freight_value) over order_items.
+    business_purpose: Customer-facing order value from the item side, for comparison with payments.
+    sql: |
+      SELECT sum(price) + sum(freight_value) AS items_gross_value
+      FROM analytics.order_items
+    aggregation_grain: order item
+    timestamp: *item_ts
+    supported_dimensions: *item_dims
+    depends_on: [metric.product_sales_value, metric.freight_value_total]
+    assets: [asset.analytics.order_items]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 15,843,553.24"]}
+    double_counting_check: item grain, single table.
+
+  - id: metric.payment_value_total
+    name: Payment value
+    synonyms: [total paid, payments received, amount paid]
+    definition: Sum of order_payments.payment_value (BRL) across all payment rows, including vouchers.
+    business_purpose: Money paid by customers across all payment instruments.
+    sql: |
+      SELECT sum(payment_value) AS payment_value_total
+      FROM analytics.order_payments
+    aggregation_grain: payment row (analytics.order_payments)
+    timestamp:
+      column: analytics.orders.order_purchase_timestamp
+      meaning: order purchase time via order_payments.order_id (payment timestamps are not in the data)
+      timezone: unspecified (assumed Brazil local time)
+      timezone_basis: The source documentation does not state a time zone; UNVERIFIED assumption.
+    inclusions: [voucher payments, payments on orders with no items]
+    supported_dimensions:
+      - {name: payment_type, expression: order_payments.payment_type, asset: asset.analytics.order_payments}
+      - {name: purchase_month, expression: "date_trunc('month', orders.order_purchase_timestamp)", asset: asset.analytics.orders}
+      - {name: order_status, expression: orders.order_status, asset: asset.analytics.orders}
+    assets: [asset.analytics.order_payments]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance:
+      authored_by: agent.claude_code
+      authored_at: 2026-11-19
+      generated_by: ai
+      evidence:
+        - "executed 2026-11-19: 16,008,872.12"
+        - "reconciliation: 15,843,553.24 items gross - 143.46 (1 delivered order without payment rows) + 162,591.95 (payments on 775 orders without items) + 2,870.39 (net difference on 303 mismatched orders) = 16,008,872.12"
+    assumptions: ["Vouchers count as payment (they are recorded as a payment_type)."]
+    double_counting_check: >
+      Summed at payment-row grain from a single table. Do NOT join order_items first: a naive
+      payments x items x reviews join inflates the total by 4,407,970.42 BRL (fanout check).
+    known_issues: ["Differs from items_gross_value; see reconciliation evidence.", "Installment interest, if any, is not separately identifiable."]
+
+  - id: metric.average_order_product_value
+    name: Average order product value
+    synonyms: [average basket value, average order value excluding freight]
+    definition: Mean over orders that have at least one item of the order's summed item price (excludes freight).
+    business_purpose: Typical merchandise value per order.
+    sql: |
+      SELECT avg(items_price_total) AS average_order_product_value
+      FROM analytics.order_item_totals
+    numerator: {description: product sales value, expression: sum(items_price_total)}
+    denominator: {description: orders with at least one item, expression: count(order_id)}
+    aggregation_grain: order (pre-aggregated in analytics.order_item_totals)
+    timestamp: *item_ts
+    exclusions: ["775 orders with no item rows are excluded from the denominator"]
+    supported_dimensions:
+      - {name: purchase_month, expression: "date_trunc('month', orders.order_purchase_timestamp)", asset: asset.analytics.orders, join_path_note: "order_item_totals.order_id = orders.order_id (1:1)"}
+      - {name: order_status, expression: orders.order_status, asset: asset.analytics.orders}
+    depends_on: [metric.product_sales_value]
+    assets: [asset.analytics.order_item_totals]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: "'AOV' is registered as ambiguous; this is one candidate definition."}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 137.754"]}
+    double_counting_check: order_item_totals is one row per order (pk), so avg() weights each order once.

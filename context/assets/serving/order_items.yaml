@@ -1,0 +1,48 @@
+id: asset.analytics.order_items
+name: Order items
+kind: table
+layer: serving
+database: olist_serving
+schema: analytics
+table: order_items
+description: >
+  One row per item line within an order. Holds the item price and the freight value allocated to
+  the item. An order can have up to 21 item rows and items from multiple sellers.
+grain: one row per (order_id, order_item_id) - 112,650 rows covering 98,666 orders
+domain: commerce.sales
+owner: team.commerce_analytics
+steward: team.data_platform
+sensitivity: internal
+primary_key: [order_id, order_item_id]
+foreign_keys:
+  - {columns: [order_id], references: asset.analytics.orders, ref_columns: [order_id], observed_violations: none}
+  - {columns: [product_id], references: asset.analytics.products, ref_columns: [product_id], observed_violations: none}
+  - {columns: [seller_id], references: asset.analytics.sellers, ref_columns: [seller_id], observed_violations: none}
+columns:
+  - {name: order_id, data_type: VARCHAR, description: Order identifier., sensitivity: internal, nullable: false}
+  - {name: order_item_id, data_type: INTEGER, description: "Sequential item number within the order (1..n). Quantity is represented by repeated rows, not a quantity column.", sensitivity: internal, nullable: false}
+  - {name: product_id, data_type: VARCHAR, description: Product identifier., sensitivity: internal}
+  - {name: seller_id, data_type: VARCHAR, description: Seller fulfilling this item., sensitivity: internal}
+  - {name: shipping_limit_date, data_type: TIMESTAMP, description: Seller's deadline to hand the item to the carrier., sensitivity: internal}
+  - {name: price, data_type: "DECIMAL(12,2)", description: "Item price in BRL (excludes freight). Always > 0; min 0.85, max 6,735.00.", sensitivity: internal}
+  - {name: freight_value, data_type: "DECIMAL(12,2)", description: "Freight allocated to this item in BRL. When an order has several items, freight is split across them. Exceeds price on 4,124 rows.", sensitivity: internal}
+certification:
+  status: draft
+  notes: AI-proposed from profiling evidence; awaiting human review.
+provenance:
+  authored_by: agent.claude_code
+  authored_at: 2026-11-19
+  generated_by: ai
+  evidence: [data/manifests/dq_report.json]
+quality_warnings:
+  - id: qw.order_items.fanout
+    description: Joining order_items to order_payments or order_reviews multiplies rows; aggregate to order grain first.
+    check_ref: fanout.naive_payment_item_review_join_inflation_cents
+  - id: qw.order_items.payment_mismatch
+    description: For 303 orders sum(price + freight_value) differs from sum(payment_value) by more than 0.01 BRL.
+    check_ref: consistency.payment_vs_items_mismatch_orders
+lineage:
+  sources: [asset.raw.order_items]
+  transformation: copied 1:1 from raw.order_items.
+metrics: [metric.product_sales_value, metric.freight_value_total, metric.items_gross_value, metric.average_order_product_value, metric.active_seller_count]
+tags: [items, price, freight, sales]

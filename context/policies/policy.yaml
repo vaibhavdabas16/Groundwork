@@ -1,0 +1,132 @@
+id: policy.contextforge.default
+version: 1
+owner: team.data_governance
+provenance:
+  authored_by: agent.claude_code
+  authored_at: 2026-11-19
+  generated_by: ai
+  evidence: [docs/security.md]
+
+sensitivity_classes:
+  - sensitivity: public
+    description: Publicly known reference data.
+    agent_queryable: true
+    handling: No restrictions.
+  - sensitivity: internal
+    description: Business data without personal identifiers.
+    agent_queryable: true
+    handling: Query and aggregate freely within row limits.
+  - sensitivity: pseudonymous
+    description: Keyed pseudonyms of person identifiers (HMAC-SHA256, key never exposed).
+    agent_queryable: true
+    handling: Use for counting distinct people and joins. Do not export row-level lists without purpose.
+  - sensitivity: restricted
+    description: Raw person identifiers and quasi-identifiers (customer_unique_id, customer ZIP prefix).
+    agent_queryable: false
+    handling: Never present in the serving database; never queryable through agent tools.
+  - sensitivity: pii
+    description: Free text that may contain personal data (review comments).
+    agent_queryable: false
+    handling: Never present in the serving database; never queryable through agent tools.
+
+roles:
+  - id: role.analyst_agent
+    description: AI agent answering data questions. Can read draft context (clearly labelled) and run governed queries.
+    capabilities: [metadata.read, metrics.read_verified, metrics.read_draft, query.explain, query.execute]
+    queryable_assets: &serving_assets
+      - asset.analytics.orders
+      - asset.analytics.order_items
+      - asset.analytics.order_payments
+      - asset.analytics.order_reviews
+      - asset.analytics.customers
+      - asset.analytics.products
+      - asset.analytics.sellers
+      - asset.analytics.product_category_name_translation
+      - asset.analytics.geolocation_zip_prefix
+      - asset.analytics.order_item_totals
+      - asset.analytics.order_payment_totals
+      - asset.analytics.order_review_summary
+    max_sensitivity: pseudonymous
+    allowed_certification: [verified, draft]
+    include_deprecated: false
+    max_rows: 1000
+
+  - id: role.verified_only_agent
+    description: Strict mode for evaluation - sees only verified definitions and queries only verified assets.
+    capabilities: [metadata.read, metrics.read_verified, query.explain, query.execute]
+    queryable_assets: *serving_assets
+    max_sensitivity: internal
+    allowed_certification: [verified]
+    max_rows: 1000
+
+  - id: role.metadata_reader
+    description: Discovery only. Cannot run queries.
+    capabilities: [metadata.read, metrics.read_verified, metrics.read_draft]
+    max_sensitivity: internal
+    allowed_certification: [verified, draft]
+    max_rows: 1
+
+  - id: role.context_admin
+    description: Human administrators of the context repository (changes go through Git review).
+    capabilities: [metadata.read, metrics.read_verified, metrics.read_draft, query.explain, query.execute, context.admin]
+    queryable_assets: *serving_assets
+    max_sensitivity: pseudonymous
+    allowed_certification: [verified, draft]
+    include_deprecated: true
+    max_rows: 5000
+
+principals:
+  - id: principal.local_analyst
+    kind: agent
+    roles: [role.analyst_agent]
+    description: Default principal for the local stdio MCP server.
+  - id: principal.local_strict
+    kind: agent
+    roles: [role.verified_only_agent]
+    description: Verified-only principal for evaluation runs.
+  - id: principal.local_metadata
+    kind: agent
+    roles: [role.metadata_reader]
+    description: Discovery-only principal.
+
+tool_permissions:
+  search_assets: metadata.read
+  get_asset: metadata.read
+  get_definition: metadata.read
+  get_join_path: metadata.read
+  get_policy: metadata.read
+  explain_query: query.explain
+  run_query: query.execute
+  validate_context: context.admin
+
+query:
+  allowed_statement_types: [select]
+  default_max_rows: 1000
+  max_cost_estimated_rows: 50000000
+  timeout_seconds: 20
+  max_concurrent_queries: 2
+  max_tool_calls_per_request: 50
+  allowed_functions:
+    [COUNT, SUM, AVG, MIN, MAX, MEDIAN, PERCENTILE_CONT, PERCENTILE_DISC, QUANTILE, STDDEV, STDDEV_POP,
+     STDDEV_SAMP, VARIANCE, VARIANCE_POP, COUNT_IF, ARG_MAX, ARG_MIN, ANY_VALUE, APPROX_DISTINCT,
+     BOOL_AND, BOOL_OR, LOGICAL_AND, LOGICAL_OR, CORR, MODE, ROW_NUMBER, RANK, DENSE_RANK,
+     PERCENT_RANK, CUME_DIST, NTILE, LAG, LEAD, FIRST_VALUE, LAST_VALUE, COALESCE, NULLIF, IF, CASE,
+     CAST, TRY_CAST, GREATEST, LEAST, ABS, ROUND, FLOOR, CEIL, SQRT, LN, LOG, POW, POWER, EXP, SIGN,
+     LOWER, UPPER, LENGTH, CONCAT, TRIM, SUBSTRING, LEFT, RIGHT, REPLACE, STARTS_WITH, CONCAT_WS,
+     DATE_TRUNC, TIMESTAMP_TRUNC, DATETRUNC, DATEDIFF, DATE_DIFF, TIMESTAMP_DIFF, EXTRACT, YEAR,
+     MONTH, DAY, DAYOFWEEK, DAY_OF_WEEK, DAYOFYEAR, DAY_OF_YEAR, DAY_OF_MONTH, WEEK, QUARTER, TIME_TO_STR, STRFTIME, DATE_ADD, DATE_SUB,
+     TS_OR_DS_ADD, TS_OR_DS_TO_DATE, DATE, TO_DATE, TIME_TO_UNIX, STR_TO_TIME, CURRENT_DATE,
+     TIMESTAMP_ADD, DATE_PART, LAST_DAY, DAYOFMONTH, TS_OR_DS_DIFF, GROUP_CONCAT, STRING_AGG]
+
+retention:
+  query_audit_log_days: 30
+  store_result_rows: false
+  store_sql_text: true
+  notes: Audit log (data/ops/audit.sqlite) keeps SQL text and metadata, never result rows. Purged on server start.
+
+certification_rules:
+  - draft does not mean verified; draft definitions are returned with an explicit draft label.
+  - verified requires a non-placeholder human certifier with can_certify, a timestamp and a decision reference.
+  - AI-authored content can never be certified by its author; agents cannot certify.
+  - deprecated objects require a reason and are surfaced with a do-not-use warning.
+  - role.verified_only_agent sees only verified definitions and queries only verified assets.

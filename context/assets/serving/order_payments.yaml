@@ -1,0 +1,43 @@
+id: asset.analytics.order_payments
+name: Order payments
+kind: table
+layer: serving
+database: olist_serving
+schema: analytics
+table: order_payments
+description: >
+  One row per payment instrument used on an order. An order paid with a credit card plus vouchers
+  has multiple rows (up to 29). payment_value is the amount charged to that instrument.
+grain: one row per (order_id, payment_sequential) - 103,886 rows covering 99,440 orders
+domain: commerce.payments
+owner: team.commerce_analytics
+steward: team.data_platform
+sensitivity: internal
+primary_key: [order_id, payment_sequential]
+foreign_keys:
+  - {columns: [order_id], references: asset.analytics.orders, ref_columns: [order_id], observed_violations: none}
+columns:
+  - {name: order_id, data_type: VARCHAR, description: Order identifier., sensitivity: internal, nullable: false}
+  - {name: payment_sequential, data_type: INTEGER, description: Sequence number of the payment instrument within the order., sensitivity: internal, nullable: false}
+  - {name: payment_type, data_type: VARCHAR, description: "credit_card, boleto (Brazilian bank slip), voucher, debit_card, or not_defined (3 rows, all zero value).", sensitivity: internal}
+  - {name: payment_installments, data_type: INTEGER, description: "Number of installments chosen (2 rows have 0).", sensitivity: internal}
+  - {name: payment_value, data_type: "DECIMAL(12,2)", description: "Amount paid with this instrument in BRL. 9 rows are zero.", sensitivity: internal}
+certification:
+  status: draft
+  notes: AI-proposed from profiling evidence; awaiting human review.
+provenance:
+  authored_by: agent.claude_code
+  authored_at: 2026-11-19
+  generated_by: ai
+  evidence: [data/manifests/dq_report.json]
+quality_warnings:
+  - id: qw.order_payments.multi_row
+    description: 2,961 orders have more than one payment row; never join payments to items without pre-aggregating.
+    check_ref: grain.orders_with_multiple_payments
+  - id: qw.order_payments.voucher_semantics
+    description: Vouchers are recorded as a payment type, not as a discount. Refunds are not recorded at all.
+lineage:
+  sources: [asset.raw.order_payments]
+  transformation: copied 1:1 from raw.order_payments.
+metrics: [metric.payment_value_total]
+tags: [payments, voucher, boleto, installments]

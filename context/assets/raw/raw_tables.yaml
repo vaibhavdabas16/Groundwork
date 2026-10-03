@@ -1,0 +1,207 @@
+# Raw ingestion layer (olist_raw.duckdb, schema raw). Documented for lineage and discovery only:
+# NOT queryable through agent tools (validation rejects any role that grants a raw asset).
+items:
+  - id: asset.raw.orders
+    name: Raw orders
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: orders
+    description: Original olist_orders_dataset.csv, explicitly typed.
+    grain: one row per order_id
+    domain: commerce.orders
+    owner: team.data_platform
+    sensitivity: restricted
+    primary_key: [order_id]
+    columns:
+      - {name: order_id, data_type: VARCHAR, description: Order id., sensitivity: internal}
+      - {name: customer_id, data_type: VARCHAR, description: Per-order customer id (raw identifier)., sensitivity: restricted}
+      - {name: order_status, data_type: VARCHAR, description: Status., sensitivity: internal}
+      - {name: order_purchase_timestamp, data_type: TIMESTAMP, description: Purchase time., sensitivity: internal}
+      - {name: order_approved_at, data_type: TIMESTAMP, description: Approval time., sensitivity: internal}
+      - {name: order_delivered_carrier_date, data_type: TIMESTAMP, description: Carrier handoff., sensitivity: internal}
+      - {name: order_delivered_customer_date, data_type: TIMESTAMP, description: Customer delivery., sensitivity: internal}
+      - {name: order_estimated_delivery_date, data_type: TIMESTAMP, description: Estimated delivery., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: [data/manifests/olist_source_manifest.json]}
+    lineage: {transformation: "read_csv(all_varchar) then TRY_CAST to declared types; zero cast failures required."}
+    tags: [raw]
+
+  - id: asset.raw.customers
+    name: Raw customers
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: customers
+    description: Original olist_customers_dataset.csv.
+    grain: one row per customer_id (per order)
+    domain: commerce.customers
+    owner: team.data_platform
+    sensitivity: restricted
+    primary_key: [customer_id]
+    columns:
+      - {name: customer_id, data_type: VARCHAR, description: Per-order customer id., sensitivity: restricted}
+      - {name: customer_unique_id, data_type: VARCHAR, description: Stable person identifier., sensitivity: restricted}
+      - {name: customer_zip_code_prefix, data_type: VARCHAR, description: Customer ZIP prefix (quasi-identifier)., sensitivity: restricted}
+      - {name: customer_city, data_type: VARCHAR, description: City., sensitivity: internal}
+      - {name: customer_state, data_type: VARCHAR, description: State., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    tags: [raw]
+
+  - id: asset.raw.order_items
+    name: Raw order items
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: order_items
+    description: Original olist_order_items_dataset.csv.
+    grain: one row per (order_id, order_item_id)
+    domain: commerce.sales
+    owner: team.data_platform
+    sensitivity: internal
+    primary_key: [order_id, order_item_id]
+    columns:
+      - {name: order_id, data_type: VARCHAR, description: Order id., sensitivity: internal}
+      - {name: order_item_id, data_type: INTEGER, description: Item sequence., sensitivity: internal}
+      - {name: product_id, data_type: VARCHAR, description: Product id., sensitivity: internal}
+      - {name: seller_id, data_type: VARCHAR, description: Seller id., sensitivity: internal}
+      - {name: shipping_limit_date, data_type: TIMESTAMP, description: Shipping deadline., sensitivity: internal}
+      - {name: price, data_type: "DECIMAL(12,2)", description: Price., sensitivity: internal}
+      - {name: freight_value, data_type: "DECIMAL(12,2)", description: Freight., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    tags: [raw]
+
+  - id: asset.raw.order_payments
+    name: Raw order payments
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: order_payments
+    description: Original olist_order_payments_dataset.csv.
+    grain: one row per (order_id, payment_sequential)
+    domain: commerce.payments
+    owner: team.data_platform
+    sensitivity: internal
+    primary_key: [order_id, payment_sequential]
+    columns:
+      - {name: order_id, data_type: VARCHAR, description: Order id., sensitivity: internal}
+      - {name: payment_sequential, data_type: INTEGER, description: Sequence., sensitivity: internal}
+      - {name: payment_type, data_type: VARCHAR, description: Type., sensitivity: internal}
+      - {name: payment_installments, data_type: INTEGER, description: Installments., sensitivity: internal}
+      - {name: payment_value, data_type: "DECIMAL(12,2)", description: Value., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    tags: [raw]
+
+  - id: asset.raw.order_reviews
+    name: Raw order reviews
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: order_reviews
+    description: Original olist_order_reviews_dataset.csv including free-text comments.
+    grain: one row per (review_id, order_id)
+    domain: customer_experience.reviews
+    owner: team.data_platform
+    sensitivity: pii
+    primary_key: [review_id, order_id]
+    columns:
+      - {name: review_id, data_type: VARCHAR, description: Review id., sensitivity: internal}
+      - {name: order_id, data_type: VARCHAR, description: Order id., sensitivity: internal}
+      - {name: review_score, data_type: INTEGER, description: Score 1-5., sensitivity: internal}
+      - {name: review_comment_title, data_type: VARCHAR, description: Free-text title; may contain personal data., sensitivity: pii}
+      - {name: review_comment_message, data_type: VARCHAR, description: Free-text message; may contain personal data., sensitivity: pii}
+      - {name: review_creation_date, data_type: TIMESTAMP, description: Survey sent., sensitivity: internal}
+      - {name: review_answer_timestamp, data_type: TIMESTAMP, description: Survey answered., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    tags: [raw]
+
+  - id: asset.raw.products
+    name: Raw products
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: products
+    description: Original olist_products_dataset.csv.
+    grain: one row per product_id
+    domain: commerce.catalog
+    owner: team.data_platform
+    sensitivity: internal
+    primary_key: [product_id]
+    columns:
+      - {name: product_id, data_type: VARCHAR, description: Product id., sensitivity: internal}
+      - {name: product_category_name, data_type: VARCHAR, description: Category (PT)., sensitivity: internal}
+      - {name: product_name_lenght, data_type: INTEGER, description: Name length., sensitivity: internal}
+      - {name: product_description_lenght, data_type: INTEGER, description: Description length., sensitivity: internal}
+      - {name: product_photos_qty, data_type: INTEGER, description: Photos., sensitivity: internal}
+      - {name: product_weight_g, data_type: INTEGER, description: Weight g., sensitivity: internal}
+      - {name: product_length_cm, data_type: INTEGER, description: Length cm., sensitivity: internal}
+      - {name: product_height_cm, data_type: INTEGER, description: Height cm., sensitivity: internal}
+      - {name: product_width_cm, data_type: INTEGER, description: Width cm., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    tags: [raw]
+
+  - id: asset.raw.sellers
+    name: Raw sellers
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: sellers
+    description: Original olist_sellers_dataset.csv.
+    grain: one row per seller_id
+    domain: commerce.sellers
+    owner: team.data_platform
+    sensitivity: internal
+    primary_key: [seller_id]
+    columns:
+      - {name: seller_id, data_type: VARCHAR, description: Seller id., sensitivity: internal}
+      - {name: seller_zip_code_prefix, data_type: VARCHAR, description: ZIP prefix., sensitivity: internal}
+      - {name: seller_city, data_type: VARCHAR, description: City., sensitivity: internal}
+      - {name: seller_state, data_type: VARCHAR, description: State., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    tags: [raw]
+
+  - id: asset.raw.geolocation
+    name: Raw geolocation
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: geolocation
+    description: Original olist_geolocation_dataset.csv. Many rows per ZIP prefix (not a key).
+    grain: one row per source geolocation point; NOT unique by ZIP prefix (1,000,163 rows / 19,015 prefixes)
+    domain: reference.geography
+    owner: team.data_platform
+    sensitivity: internal
+    columns:
+      - {name: geolocation_zip_code_prefix, data_type: VARCHAR, description: ZIP prefix., sensitivity: internal}
+      - {name: geolocation_lat, data_type: DOUBLE, description: Latitude., sensitivity: internal}
+      - {name: geolocation_lng, data_type: DOUBLE, description: Longitude., sensitivity: internal}
+      - {name: geolocation_city, data_type: VARCHAR, description: City., sensitivity: internal}
+      - {name: geolocation_state, data_type: VARCHAR, description: State., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    tags: [raw]
+
+  - id: asset.raw.product_category_name_translation
+    name: Raw category translation
+    layer: raw
+    database: olist_raw
+    schema: raw
+    table: product_category_name_translation
+    description: Original product_category_name_translation.csv.
+    grain: one row per product_category_name
+    domain: commerce.catalog
+    owner: team.data_platform
+    sensitivity: internal
+    primary_key: [product_category_name]
+    columns:
+      - {name: product_category_name, data_type: VARCHAR, description: Category (PT)., sensitivity: internal}
+      - {name: product_category_name_english, data_type: VARCHAR, description: Category (EN)., sensitivity: internal}
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    tags: [raw]

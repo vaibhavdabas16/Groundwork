@@ -1,0 +1,97 @@
+items:
+  - id: metric.order_count
+    name: Order count
+    synonyms: [number of orders, orders placed, total orders]
+    definition: Number of distinct orders placed, all statuses included, attributed to order_purchase_timestamp.
+    business_purpose: Baseline demand volume.
+    sql: |
+      SELECT count(DISTINCT order_id) AS order_count
+      FROM analytics.orders
+    aggregation_grain: order (analytics.orders, one row per order_id)
+    timestamp: &purchase_ts
+      column: analytics.orders.order_purchase_timestamp
+      meaning: when the customer placed the order
+      timezone: unspecified (assumed Brazil local time)
+      timezone_basis: The source documentation does not state a time zone; UNVERIFIED assumption.
+    inclusions: [all order_status values, including canceled and unavailable]
+    exclusions: []
+    supported_dimensions: &order_dims
+      - {name: purchase_month, expression: "date_trunc('month', orders.order_purchase_timestamp)", asset: asset.analytics.orders}
+      - {name: order_status, expression: orders.order_status, asset: asset.analytics.orders}
+      - {name: customer_state, expression: customers.customer_state, asset: asset.analytics.customers, join_path_note: "orders.customer_key = customers.customer_key (1:1)"}
+    assets: [asset.analytics.orders]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 99,441"]}
+    assumptions: ["'Order' means a row in the source orders file regardless of fulfilment outcome."]
+    double_counting_check: order_id is unique in analytics.orders (pk_unique.orders = 0), so count(*) = count(DISTINCT order_id).
+    known_issues: ["Sparse months at both ends of the range (2016-09, 2016-12, 2018-09, 2018-10)."]
+
+  - id: metric.delivered_order_count
+    name: Delivered order count
+    synonyms: [delivered orders, completed orders, fulfilled orders]
+    definition: Orders whose order_status is 'delivered'.
+    business_purpose: Volume of successfully fulfilled orders.
+    sql: |
+      SELECT count(*) AS delivered_order_count
+      FROM analytics.orders
+      WHERE order_status = 'delivered'
+    aggregation_grain: order
+    required_filters: ["order_status = 'delivered'"]
+    timestamp: *purchase_ts
+    inclusions: ["status 'delivered', including 8 rows with no delivery date"]
+    exclusions: ["6 orders with a delivery date but another status are NOT counted"]
+    supported_dimensions: *order_dims
+    assets: [asset.analytics.orders]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: "Status-based vs date-based definition needs a human decision."}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 96,478"]}
+    assumptions: ["Status is the source of truth for delivery, not order_delivered_customer_date."]
+    double_counting_check: one row per order; no joins.
+    known_issues: ["status.delivered_without_delivery_date = 8", "status.not_delivered_with_delivery_date = 6"]
+
+  - id: metric.canceled_order_count
+    name: Canceled order count
+    synonyms: [cancelled orders, canceled orders, cancellations]
+    definition: Orders whose order_status is 'canceled'. 'unavailable' (609 orders) is a separate status and is NOT included.
+    business_purpose: Track order cancellations.
+    sql: |
+      SELECT count(*) AS canceled_order_count
+      FROM analytics.orders
+      WHERE order_status = 'canceled'
+    aggregation_grain: order
+    required_filters: ["order_status = 'canceled'"]
+    timestamp: *purchase_ts
+    exclusions: ["order_status = 'unavailable' - meaning not documented by the source; needs a human decision whether it is a cancellation"]
+    supported_dimensions: *order_dims
+    assets: [asset.analytics.orders]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 625"]}
+    assumptions: ["Source spelling is 'canceled' (one L)."]
+    double_counting_check: one row per order; no joins.
+
+  - id: metric.cancellation_rate
+    name: Cancellation rate
+    synonyms: [cancel rate, cancelation rate]
+    definition: canceled orders / all orders, over the same purchase-date window.
+    business_purpose: Share of orders that end canceled.
+    sql: |
+      SELECT count(*) FILTER (WHERE order_status = 'canceled') * 1.0 / count(*) AS cancellation_rate
+      FROM analytics.orders
+    numerator: {description: canceled orders, expression: "count(*) FILTER (WHERE order_status = 'canceled')"}
+    denominator: {description: all orders, expression: "count(*)"}
+    aggregation_grain: order
+    timestamp: *purchase_ts
+    exclusions: ["'unavailable' is neither in the numerator nor excluded from the denominator"]
+    supported_dimensions: *order_dims
+    depends_on: [metric.canceled_order_count, metric.order_count]
+    assets: [asset.analytics.orders]
+    owner: team.commerce_analytics
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 0.006285"]}
+    double_counting_check: single table at order grain.

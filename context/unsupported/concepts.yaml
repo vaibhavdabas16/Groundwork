@@ -1,0 +1,112 @@
+# Concepts the data cannot support, or that are ambiguous without a human decision.
+# The agent must surface these instead of guessing.
+items:
+  - id: unsupported.net_revenue
+    name: Net revenue
+    synonyms: [net sales, revenue net of refunds, net income]
+    classification: unsupported
+    reason: No refunds, returns, chargebacks, discounts, commissions or taxes are recorded. Vouchers appear only as a payment type.
+    decision_needed_from: team.data_governance
+    guidance: Offer product_sales_value, items_gross_value or payment_value_total and state that none is net revenue.
+
+  - id: unsupported.revenue
+    name: Revenue
+    synonyms: [sales, total revenue, turnover, receita]
+    classification: ambiguous
+    reason: "'Revenue' could mean item price (13.59M), price+freight (15.84M) or payments (16.01M); for a marketplace it could also mean Olist's commission, which is not in the data."
+    candidate_definitions: [metric.product_sales_value, metric.items_gross_value, metric.payment_value_total]
+    decision_needed_from: team.data_governance
+    guidance: Ask which basis is meant, or report the candidates side by side with their definitions.
+
+  - id: unsupported.gmv
+    name: Gross merchandise value
+    synonyms: [gmv, gross merchandise volume]
+    classification: ambiguous
+    reason: Whether GMV includes freight, and whether canceled/unavailable orders are excluded, has not been decided.
+    candidate_definitions: [metric.product_sales_value, metric.items_gross_value]
+    decision_needed_from: team.commerce_analytics
+    guidance: State the basis explicitly; do not label either candidate "GMV" without a decision.
+
+  - id: unsupported.average_order_value
+    name: Average order value
+    synonyms: [aov, average ticket, ticket medio]
+    classification: ambiguous
+    reason: Could be based on item price, price+freight, or payments; denominator could be all orders or orders with items.
+    candidate_definitions: [metric.average_order_product_value]
+    decision_needed_from: team.commerce_analytics
+    guidance: Use metric.average_order_product_value and say it excludes freight and orders with no items.
+
+  - id: unsupported.active_customer
+    name: Active customer
+    synonyms: [active customers, active users, mau]
+    classification: ambiguous
+    reason: No activity window is defined and no non-purchase activity (logins, visits) exists. Data ends 2018-10-17, so "currently active" is meaningless relative to today.
+    candidate_definitions: [metric.distinct_customers]
+    decision_needed_from: team.commerce_analytics
+    guidance: Ask for an explicit window anchored to dates inside 2016-09-04..2018-10-17.
+
+  - id: unsupported.churn
+    name: Churn
+    synonyms: [churn rate, subscription churn, customer attrition, retention rate]
+    classification: unsupported
+    reason: There is no subscription or account lifecycle; 97% of customers ordered only once. Any churn definition would be an invented inactivity rule.
+    candidate_definitions: [metric.repeat_customer_rate]
+    decision_needed_from: team.commerce_analytics
+    guidance: Offer the repeat customer rate and explain that churn is not defined for this data.
+
+  - id: unsupported.profit
+    name: Profit or margin
+    synonyms: [profit, margin, gross margin, contribution margin, take rate, commission]
+    classification: unsupported
+    reason: No cost of goods, logistics cost, commission or fee data exists.
+    decision_needed_from: team.data_governance
+    guidance: Say it cannot be calculated from this dataset.
+
+  - id: unsupported.customer_lifetime_value
+    name: Customer lifetime value
+    synonyms: [clv, ltv, lifetime value]
+    classification: unsupported
+    reason: About 25 months of history, 97% single-order customers, no margin data. Any LTV figure would rest on unvalidated modelling assumptions.
+    decision_needed_from: team.commerce_analytics
+    guidance: Report historical spend per customer if asked, labelled as observed spend rather than LTV.
+
+  - id: unsupported.return_rate
+    name: Return rate
+    synonyms: [returns, refund rate, devolucao]
+    classification: unsupported
+    reason: Returns and refunds are not recorded. 'canceled' is an order status, not a return.
+    decision_needed_from: team.data_governance
+    guidance: Say returns are not available; cancellation rate is a different concept.
+
+  - id: unsupported.conversion_rate
+    name: Conversion rate
+    synonyms: [conversion, funnel, traffic, sessions, marketing attribution]
+    classification: unsupported
+    reason: No traffic, session or marketing funnel data is in this dataset (Olist published that separately).
+    decision_needed_from: team.data_governance
+    guidance: Say it is not available in this warehouse.
+
+  - id: unsupported.seller_rating
+    name: Seller rating
+    synonyms: [seller score, seller reviews, merchant rating]
+    classification: ambiguous
+    reason: Reviews are per order, not per seller; 1,278 orders contain items from multiple sellers, so the review cannot be attributed to one seller.
+    candidate_definitions: [metric.average_review_score]
+    decision_needed_from: team.customer_experience
+    guidance: Restrict to single-seller orders and say so, or decline.
+
+  - id: unsupported.relative_time_window
+    name: Relative time window
+    synonyms: [last 30 days, this month, this year, yesterday, recent, current]
+    classification: ambiguous
+    reason: The data is a historical snapshot ending 2018-10-17. Relative windows computed from today's date return nothing or mislead.
+    decision_needed_from: team.data_governance
+    guidance: Anchor relative windows to the last purchase date (2018-10-17) and say so, or ask for explicit dates.
+
+  - id: unsupported.inventory
+    name: Inventory
+    synonyms: [stock, stock level, out of stock]
+    classification: unsupported
+    reason: No inventory data. 'unavailable' order status is not documented as stock-out.
+    decision_needed_from: team.data_governance
+    guidance: Say it is not available.

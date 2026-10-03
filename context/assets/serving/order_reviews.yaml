@@ -1,0 +1,48 @@
+id: asset.analytics.order_reviews
+name: Order reviews
+kind: table
+layer: serving
+database: olist_serving
+schema: analytics
+table: order_reviews
+description: >
+  Customer satisfaction survey responses. Free-text title/message from the source are NOT exposed
+  (they may contain personal data); only boolean "has comment" flags are provided.
+grain: >
+  one row per (review_id, order_id) - 99,224 rows. review_id is NOT unique (789 review_ids are
+  shared by several orders) and 547 orders have more than one review row.
+domain: customer_experience.reviews
+owner: team.customer_experience
+steward: team.data_platform
+sensitivity: internal
+primary_key: [review_id, order_id]
+foreign_keys:
+  - {columns: [order_id], references: asset.analytics.orders, ref_columns: [order_id], observed_violations: none}
+columns:
+  - {name: review_id, data_type: VARCHAR, description: "Review identifier; not unique on its own.", sensitivity: internal, nullable: false}
+  - {name: order_id, data_type: VARCHAR, description: Order the review refers to., sensitivity: internal, nullable: false}
+  - {name: review_score, data_type: INTEGER, description: "Satisfaction score 1-5 (5 is best). Distribution - 1:11,424 2:3,151 3:8,179 4:19,142 5:57,328.", sensitivity: internal}
+  - {name: has_comment_title, data_type: BOOLEAN, description: Whether the source review had a comment title (text withheld)., sensitivity: internal}
+  - {name: has_comment_message, data_type: BOOLEAN, description: "Whether the source review had a comment message (text withheld). 40,977 rows true.", sensitivity: internal}
+  - {name: review_creation_date, data_type: TIMESTAMP, description: When the satisfaction survey was sent (date precision)., sensitivity: internal}
+  - {name: review_answer_timestamp, data_type: TIMESTAMP, description: When the customer answered the survey., sensitivity: internal}
+certification:
+  status: draft
+  notes: AI-proposed from profiling evidence; awaiting human review.
+provenance:
+  authored_by: agent.claude_code
+  authored_at: 2026-11-19
+  generated_by: ai
+  evidence: [data/manifests/dq_report.json]
+quality_warnings:
+  - id: qw.order_reviews.non_unique_review_id
+    description: 789 review_ids appear on more than one order.
+    check_ref: dup.review_id_across_orders
+  - id: qw.order_reviews.multi_review_orders
+    description: 547 orders have more than one review row; 768 orders have none.
+    check_ref: grain.orders_with_multiple_reviews
+lineage:
+  sources: [asset.raw.order_reviews]
+  transformation: free-text columns replaced by boolean presence flags.
+metrics: [metric.average_review_score]
+tags: [reviews, satisfaction, nps, score]

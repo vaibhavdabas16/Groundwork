@@ -1,0 +1,131 @@
+# Join relationships between serving assets. Cardinality is read left -> right and was checked
+# against the real data (see `observed`).
+items:
+  - id: join.orders__customers
+    left: asset.analytics.orders
+    right: asset.analytics.customers
+    join_columns: [{left: customer_key, right: customer_key}]
+    cardinality: one_to_one
+    grain_note: customer_key is issued per order, so this is 1:1.
+    observed: every customer_key appears in exactly one order (grain.customer_id_one_order = 0).
+    owner: team.commerce_analytics
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.orders__order_items
+    left: asset.analytics.orders
+    right: asset.analytics.order_items
+    join_columns: [{left: order_id, right: order_id}]
+    cardinality: one_to_many
+    grain_note: result is at item grain; up to 21 items per order; 775 orders have no items (use LEFT JOIN to keep them).
+    fanout_warning: Order-level measures (counts of orders, payments, reviews) are multiplied by the item count. Use count(DISTINCT order_id) or aggregate items first.
+    metric_restrictions: [metric.order_count must use count(DISTINCT order_id) after this join, metric.payment_value_total must not be summed after this join]
+    bridge: asset.analytics.order_item_totals
+    observed: 9,803 orders have more than one item.
+    owner: team.commerce_analytics
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.orders__order_payments
+    left: asset.analytics.orders
+    right: asset.analytics.order_payments
+    join_columns: [{left: order_id, right: order_id}]
+    cardinality: one_to_many
+    grain_note: result is at payment-row grain; up to 29 payment rows per order.
+    fanout_warning: Order and item measures are multiplied by the number of payment rows. Aggregate payments to order grain first.
+    metric_restrictions: [metric.product_sales_value must not be summed after this join]
+    bridge: asset.analytics.order_payment_totals
+    observed: 2,961 orders have more than one payment row; 1 order has none.
+    owner: team.commerce_analytics
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.orders__order_reviews
+    left: asset.analytics.orders
+    right: asset.analytics.order_reviews
+    join_columns: [{left: order_id, right: order_id}]
+    cardinality: one_to_many
+    grain_note: result is at review-row grain; 547 orders have multiple reviews, 768 have none.
+    fanout_warning: Order, item and payment measures are multiplied for multi-review orders. Use order_review_summary.
+    bridge: asset.analytics.order_review_summary
+    observed: 547 orders with >1 review row.
+    owner: team.customer_experience
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.order_items__products
+    left: asset.analytics.order_items
+    right: asset.analytics.products
+    join_columns: [{left: product_id, right: product_id}]
+    cardinality: many_to_one
+    direction: both
+    grain_note: safe from item side - item grain is preserved.
+    fanout_warning: Many-to-one from items (safe). Reversed (products -> items) it fans out to item grain.
+    observed: no orphan product_ids; item-grain sums reconcile exactly after the join.
+    owner: team.commerce_analytics
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.order_items__sellers
+    left: asset.analytics.order_items
+    right: asset.analytics.sellers
+    join_columns: [{left: seller_id, right: seller_id}]
+    cardinality: many_to_one
+    grain_note: safe from item side. An order can have several sellers (1,278 orders), so seller attribution is per item.
+    fanout_warning: Many-to-one from items (safe). Do not attribute order-level measures (payments, reviews) to a single seller for multi-seller orders.
+    metric_restrictions: [order-level metrics (payments, reviews) cannot be uniquely attributed to sellers for 1,278 multi-seller orders]
+    owner: team.commerce_analytics
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.products__product_category_name_translation
+    left: asset.analytics.products
+    right: asset.analytics.product_category_name_translation
+    join_columns: [{left: product_category_name, right: product_category_name}]
+    cardinality: many_to_one
+    grain_note: Not needed - analytics.products already carries product_category_name_english.
+    fanout_warning: Many-to-one (safe). Use LEFT JOIN; 2 categories have no translation.
+    owner: team.commerce_analytics
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.sellers__geolocation_zip_prefix
+    left: asset.analytics.sellers
+    right: asset.analytics.geolocation_zip_prefix
+    join_columns: [{left: seller_zip_code_prefix, right: zip_code_prefix}]
+    cardinality: many_to_one
+    grain_note: geolocation_zip_prefix is pre-aggregated to one row per prefix. 7 seller prefixes have no match.
+    fanout_warning: "Safe only against analytics.geolocation_zip_prefix. The raw geolocation table has up to 1,146 rows per prefix and would fan out massively."
+    owner: team.data_platform
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.orders__order_item_totals
+    left: asset.analytics.orders
+    right: asset.analytics.order_item_totals
+    join_columns: [{left: order_id, right: order_id}]
+    cardinality: zero_or_one_to_one
+    grain_note: order grain preserved (bridge). 775 orders have no row - use LEFT JOIN.
+    owner: team.commerce_analytics
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.orders__order_payment_totals
+    left: asset.analytics.orders
+    right: asset.analytics.order_payment_totals
+    join_columns: [{left: order_id, right: order_id}]
+    cardinality: zero_or_one_to_one
+    grain_note: order grain preserved (bridge). 1 order has no row.
+    owner: team.commerce_analytics
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+
+  - id: join.orders__order_review_summary
+    left: asset.analytics.orders
+    right: asset.analytics.order_review_summary
+    join_columns: [{left: order_id, right: order_id}]
+    cardinality: zero_or_one_to_one
+    grain_note: order grain preserved (bridge). 768 orders have no row.
+    owner: team.customer_experience
+    certification: {status: draft}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}

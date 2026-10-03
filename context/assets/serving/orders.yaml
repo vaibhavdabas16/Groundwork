@@ -1,0 +1,102 @@
+id: asset.analytics.orders
+name: Orders
+kind: table
+layer: serving
+database: olist_serving
+schema: analytics
+table: orders
+description: >
+  One row per order placed on the Olist marketplace (Sept 2016 - Oct 2018), with lifecycle
+  timestamps and status. Customer identifiers are replaced by keyed pseudonyms. Monetary values
+  are NOT on this table: use order_items (item value/freight) or order_payments (payments).
+grain: one row per order_id (99,441 rows; order_id unique - verified by check pk_unique.orders)
+domain: commerce.orders
+owner: team.commerce_analytics
+steward: team.data_platform
+sensitivity: pseudonymous
+primary_key: [order_id]
+foreign_keys:
+  - columns: [customer_key]
+    references: asset.analytics.customers
+    ref_columns: [customer_key]
+    enforced_in_source: false
+    observed_violations: none (check fk.orders.customer_id->customers = 0)
+columns:
+  - name: order_id
+    data_type: VARCHAR
+    description: Source order identifier (already an opaque hash in the public dataset).
+    sensitivity: internal
+    nullable: false
+  - name: customer_key
+    data_type: VARCHAR
+    description: >
+      Pseudonym (HMAC-SHA256) of source customer_id. customer_id is issued PER ORDER, so this is
+      effectively an order-level key - do NOT use it to count distinct customers.
+    sensitivity: pseudonymous
+  - name: customer_unique_key
+    data_type: VARCHAR
+    description: >
+      Pseudonym of source customer_unique_id - the identifier of the person. Use this to count
+      distinct customers or detect repeat purchasers.
+    sensitivity: pseudonymous
+  - name: order_status
+    data_type: VARCHAR
+    description: >
+      Lifecycle status. Observed values - delivered (96,478), shipped (1,107), canceled (625),
+      unavailable (609), invoiced (314), processing (301), created (5), approved (2). Note the
+      American spelling 'canceled'.
+    sensitivity: internal
+  - name: order_purchase_timestamp
+    data_type: TIMESTAMP
+    description: When the customer placed the order. Default timestamp for order-based metrics. Never null.
+    sensitivity: internal
+    nullable: false
+  - name: order_approved_at
+    data_type: TIMESTAMP
+    description: Payment approval timestamp.
+    sensitivity: internal
+  - name: order_delivered_carrier_date
+    data_type: TIMESTAMP
+    description: When the order was handed to the logistics partner. 166 rows precede the purchase timestamp.
+    sensitivity: internal
+  - name: order_delivered_customer_date
+    data_type: TIMESTAMP
+    description: >
+      Actual delivery to the customer. 8 'delivered' orders have no value; 6 non-delivered orders
+      do have one.
+    sensitivity: internal
+  - name: order_estimated_delivery_date
+    data_type: TIMESTAMP
+    description: Delivery date promised at purchase time. Date-only precision (time is always 00:00:00).
+    sensitivity: internal
+certification:
+  status: draft
+  notes: AI-proposed from profiling evidence; awaiting human review.
+provenance:
+  authored_by: agent.claude_code
+  authored_at: 2026-11-19
+  generated_by: ai
+  evidence: [data/manifests/dq_report.json, data/manifests/warehouse_build_manifest.json]
+quality_warnings:
+  - id: qw.orders.status_date_mismatch
+    description: 8 delivered orders lack a delivery date; 6 non-delivered orders have one.
+    check_ref: status.delivered_without_delivery_date
+  - id: qw.orders.carrier_before_purchase
+    description: 166 orders have a carrier handoff before the purchase timestamp (source timestamp quality).
+    check_ref: time.carrier_before_purchase
+  - id: qw.orders.no_items
+    description: 775 orders have no item rows (mostly unavailable/canceled); 1 order has no payment row.
+    check_ref: ri.orders_without_items
+  - id: qw.orders.sparse_edges
+    description: >
+      Coverage is sparse at the edges - 2016-09 (4 orders), 2016-12 (1), 2018-09 (16), 2018-10 (4).
+      Last purchase is 2018-10-17; do not interpret relative windows against today's date.
+    check_ref: time.max_purchase_date_epoch
+lineage:
+  sources: [asset.raw.orders, asset.raw.customers]
+  transformation: raw.orders LEFT JOIN raw.customers on customer_id; identifiers replaced by HMAC pseudonyms.
+last_reviewed_at: null
+metrics: [metric.order_count, metric.delivered_order_count, metric.canceled_order_count, metric.cancellation_rate,
+          metric.distinct_customers, metric.repeat_customer_rate, metric.average_delivery_days,
+          metric.on_time_delivery_rate]
+tags: [orders, lifecycle, status]

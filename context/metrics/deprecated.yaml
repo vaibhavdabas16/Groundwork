@@ -1,0 +1,30 @@
+# Documented anti-patterns, kept so that search surfaces them with a clear "do not use" status.
+items:
+  - id: metric.payment_value_naive_item_join
+    name: Payment value via item join (anti-pattern)
+    synonyms: [revenue by item join]
+    definition: >
+      sum(payment_value) after joining order_payments to order_items on order_id. WRONG - every
+      payment row is repeated once per item row of the order.
+    business_purpose: Kept only to document a known double-counting pattern.
+    sql: |
+      SELECT sum(p.payment_value) AS inflated_payment_value
+      FROM analytics.order_payments AS p
+      JOIN analytics.order_items AS i ON i.order_id = p.order_id
+    aggregation_grain: (invalid) payment row x item row
+    timestamp:
+      column: analytics.orders.order_purchase_timestamp
+      meaning: n/a
+      timezone: unspecified
+      timezone_basis: n/a
+    assets: [asset.analytics.order_payments, asset.analytics.order_items]
+    owner: team.commerce_analytics
+    certification:
+      status: deprecated
+      deprecated_reason: >
+        Join fanout - executed 2026-11-19 returns 20,308,134.71 vs the correct 16,008,872.12.
+        Deprecation proposed by AI as a protective measure; a human should confirm.
+      replaced_by: metric.payment_value_total
+    version: 1
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai, evidence: ["executed 2026-11-19: 20,308,134.71"]}
+    double_counting_check: FAILS - this is the counter-example.

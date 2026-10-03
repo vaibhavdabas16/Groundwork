@@ -1,0 +1,83 @@
+# Order-grain pre-aggregations. These exist so order-level questions can combine items, payments
+# and reviews without join fanout. Each is exactly one row per order_id that has detail rows.
+items:
+  - id: asset.analytics.order_item_totals
+    name: Order item totals
+    layer: serving
+    database: olist_serving
+    schema: analytics
+    table: order_item_totals
+    description: Items aggregated to order grain - item count, seller count, price, freight and price+freight totals.
+    grain: one row per order_id that has at least one item (98,666 rows; 775 orders have no items)
+    domain: commerce.sales
+    owner: team.commerce_analytics
+    sensitivity: internal
+    primary_key: [order_id]
+    foreign_keys:
+      - {columns: [order_id], references: asset.analytics.orders, ref_columns: [order_id]}
+    columns:
+      - {name: order_id, data_type: VARCHAR, description: Order identifier., sensitivity: internal, nullable: false}
+      - {name: item_count, data_type: BIGINT, description: Number of item rows in the order., sensitivity: internal}
+      - {name: seller_count, data_type: BIGINT, description: Distinct sellers in the order., sensitivity: internal}
+      - {name: product_count, data_type: BIGINT, description: Distinct products in the order., sensitivity: internal}
+      - {name: items_price_total, data_type: "DECIMAL(38,2)", description: sum(price) for the order., sensitivity: internal}
+      - {name: items_freight_total, data_type: "DECIMAL(38,2)", description: sum(freight_value) for the order., sensitivity: internal}
+      - {name: items_gross_total, data_type: "DECIMAL(38,2)", description: sum(price) + sum(freight_value)., sensitivity: internal}
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    lineage: {sources: [asset.raw.order_items], transformation: GROUP BY order_id.}
+    metrics: [metric.average_order_product_value]
+    tags: [bridge, order grain, pre-aggregated, basket]
+
+  - id: asset.analytics.order_payment_totals
+    name: Order payment totals
+    layer: serving
+    database: olist_serving
+    schema: analytics
+    table: order_payment_totals
+    description: Payments aggregated to order grain - total paid, number of payment rows/types, max installments.
+    grain: one row per order_id with at least one payment (99,440 rows)
+    domain: commerce.payments
+    owner: team.commerce_analytics
+    sensitivity: internal
+    primary_key: [order_id]
+    foreign_keys:
+      - {columns: [order_id], references: asset.analytics.orders, ref_columns: [order_id]}
+    columns:
+      - {name: order_id, data_type: VARCHAR, description: Order identifier., sensitivity: internal, nullable: false}
+      - {name: payment_row_count, data_type: BIGINT, description: Number of payment rows., sensitivity: internal}
+      - {name: payment_type_count, data_type: BIGINT, description: Distinct payment types used., sensitivity: internal}
+      - {name: payment_total, data_type: "DECIMAL(38,2)", description: sum(payment_value) for the order., sensitivity: internal}
+      - {name: max_installments, data_type: INTEGER, description: Maximum installments across the order's payment rows., sensitivity: internal}
+      - {name: payment_types, data_type: VARCHAR, description: Comma-separated sorted distinct payment types., sensitivity: internal}
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    lineage: {sources: [asset.raw.order_payments], transformation: GROUP BY order_id.}
+    tags: [bridge, order grain, pre-aggregated, payment]
+
+  - id: asset.analytics.order_review_summary
+    name: Order review summary
+    layer: serving
+    database: olist_serving
+    schema: analytics
+    table: order_review_summary
+    description: Reviews aggregated to order grain - review row count, mean/min/max score, latest answered score.
+    grain: one row per order_id with at least one review (98,673 rows)
+    domain: customer_experience.reviews
+    owner: team.customer_experience
+    sensitivity: internal
+    primary_key: [order_id]
+    foreign_keys:
+      - {columns: [order_id], references: asset.analytics.orders, ref_columns: [order_id]}
+    columns:
+      - {name: order_id, data_type: VARCHAR, description: Order identifier., sensitivity: internal, nullable: false}
+      - {name: review_row_count, data_type: BIGINT, description: Number of review rows for the order., sensitivity: internal}
+      - {name: review_score_mean, data_type: DOUBLE, description: Mean review score across the order's review rows., sensitivity: internal}
+      - {name: latest_answered_review_score, data_type: INTEGER, description: Score of the most recently answered review., sensitivity: internal}
+      - {name: review_score_min, data_type: INTEGER, description: Minimum score., sensitivity: internal}
+      - {name: review_score_max, data_type: INTEGER, description: Maximum score., sensitivity: internal}
+    certification: {status: draft, notes: AI-proposed; awaiting human review.}
+    provenance: {authored_by: agent.claude_code, authored_at: 2026-11-19, generated_by: ai}
+    lineage: {sources: [asset.raw.order_reviews], transformation: GROUP BY order_id.}
+    metrics: [metric.average_review_score]
+    tags: [bridge, order grain, pre-aggregated, review]
