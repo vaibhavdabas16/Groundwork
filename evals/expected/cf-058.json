@@ -1,0 +1,22 @@
+{
+ "case_id": "cf-058",
+ "case_hash": "f3807145f1f75de4a439275dab6c1dab7859493a7b310b3d2387da69905a1607",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:29+00:00",
+ "sql_sha256": "57d4eb00d99c74cdcd8b846a2465ad5d5a42a4c8b5d0d8b05882770cfdc106d7",
+ "columns": [
+  "total_paid"
+ ],
+ "column_types": [
+  "DECIMAL(38,2)"
+ ],
+ "rows": [
+  [
+   185422.28
+  ]
+ ],
+ "row_count": 1,
+ "alternatives": []
+}

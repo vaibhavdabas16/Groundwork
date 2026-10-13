@@ -1,0 +1,61 @@
+{
+ "case_id": "cf-039",
+ "case_hash": "5e45088e412958f68b4660989ea787724b7e4b234c4b8993817887d6e69457db",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:21+00:00",
+ "sql_sha256": "083af4aa658c7b8a2657be46cc8d51d1b08198f5707129241cbf33fe6dbf4c9f",
+ "columns": [
+  "seller_id",
+  "items"
+ ],
+ "column_types": [
+  "VARCHAR",
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   "6560211a19b47992c3666cc44a7e94c0",
+   2033
+  ],
+  [
+   "4a3ca9315b744ce9f8e9374361493884",
+   1987
+  ],
+  [
+   "1f50f920176fa81dab994f9023523100",
+   1931
+  ],
+  [
+   "cc419e0650a3c5ba77189a1882b7556a",
+   1775
+  ],
+  [
+   "da8622b14eb17ae2831f4ac5b9dab84a",
+   1551
+  ],
+  [
+   "955fee9216a65b617aa5c0531780ce60",
+   1499
+  ],
+  [
+   "1025f0e2d44d7041d6cf58b6550e0bfa",
+   1428
+  ],
+  [
+   "7c67e1448b00f6e969d365cea6b010ab",
+   1364
+  ],
+  [
+   "ea8482cd71df3c1969d7b9473ff13abc",
+   1203
+  ],
+  [
+   "7a67c85e85bb2ce8582c35f2203ad736",
+   1171
+  ]
+ ],
+ "row_count": 10,
+ "alternatives": []
+}

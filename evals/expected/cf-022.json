@@ -1,0 +1,22 @@
+{
+ "case_id": "cf-022",
+ "case_hash": "98f8c69f8701e76958cab981eb69383559d488fe68afed9b49b1bde64d59c479",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:12+00:00",
+ "sql_sha256": "44e1b972bbc0cd7199cdeed28df4c30f1ca2fc67a2186787b6084dde70b86f4e",
+ "columns": [
+  "product_sales_value"
+ ],
+ "column_types": [
+  "DECIMAL(38,2)"
+ ],
+ "rows": [
+  [
+   2418404.97
+  ]
+ ],
+ "row_count": 1,
+ "alternatives": []
+}

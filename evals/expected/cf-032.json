@@ -1,0 +1,129 @@
+{
+ "case_id": "cf-032",
+ "case_hash": "c352bfd4cfd6ca9647d293f2cda6f20f31a556a5d2cb8873ed3a14da87cc2333",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:17+00:00",
+ "sql_sha256": "f47eb134122d30b53bbd3b7b3e5b8ec2d696e45361feb4b14991e85851c2ec80",
+ "columns": [
+  "customer_state",
+  "customers"
+ ],
+ "column_types": [
+  "VARCHAR",
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   "SP",
+   40302
+  ],
+  [
+   "MG",
+   11259
+  ],
+  [
+   "PR",
+   4882
+  ],
+  [
+   "RJ",
+   12384
+  ],
+  [
+   "RS",
+   5277
+  ],
+  [
+   "BA",
+   3277
+  ],
+  [
+   "DF",
+   2075
+  ],
+  [
+   "CE",
+   1313
+  ],
+  [
+   "RN",
+   474
+  ],
+  [
+   "PI",
+   482
+  ],
+  [
+   "AC",
+   77
+  ],
+  [
+   "MA",
+   726
+  ],
+  [
+   "RR",
+   45
+  ],
+  [
+   "SC",
+   3534
+  ],
+  [
+   "PA",
+   949
+  ],
+  [
+   "GO",
+   1952
+  ],
+  [
+   "ES",
+   1964
+  ],
+  [
+   "PE",
+   1609
+  ],
+  [
+   "MT",
+   876
+  ],
+  [
+   "RO",
+   240
+  ],
+  [
+   "MS",
+   694
+  ],
+  [
+   "AL",
+   401
+  ],
+  [
+   "PB",
+   519
+  ],
+  [
+   "SE",
+   342
+  ],
+  [
+   "TO",
+   273
+  ],
+  [
+   "AM",
+   143
+  ],
+  [
+   "AP",
+   67
+  ]
+ ],
+ "row_count": 27,
+ "alternatives": []
+}

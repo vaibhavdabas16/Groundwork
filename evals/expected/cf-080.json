@@ -1,0 +1,22 @@
+{
+ "case_id": "cf-080",
+ "case_hash": "9fce9d737a1b8b718c92bce758c4018f807c06b8a6e71014d178046adc5bb6de",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:38+00:00",
+ "sql_sha256": "bfcfcc0f7161863c4c0d9f800d53c6204100e5412a4d8bb4d03bbf8c58db0086",
+ "columns": [
+  "avg_score"
+ ],
+ "column_types": [
+  "DOUBLE"
+ ],
+ "rows": [
+  [
+   3.601186790505676
+  ]
+ ],
+ "row_count": 1,
+ "alternatives": []
+}

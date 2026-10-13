@@ -1,0 +1,414 @@
+# Answerable cases: counts, filtering, date ranges, aggregation, grouping.
+# Gold SQL is authored against analytics.* and executed through the governed query path by
+# `contextforge eval gold freeze`. Expected results live in evals/expected/ (generated, never
+# hand-edited). Review status is tracked in evals/reviews.yaml, not here.
+cases:
+  - id: cf-001
+    split: dev
+    category: basic_count
+    difficulty: easy
+    question: How many orders are in the dataset?
+    interpretation: Count of all orders regardless of status.
+    gold_sql: SELECT count(*) AS order_count FROM analytics.orders
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.orders], metrics: [metric.order_count]}
+
+  - id: cf-002
+    split: heldout
+    category: basic_count
+    difficulty: medium
+    question: How many distinct customers have placed orders?
+    interpretation: >
+      Distinct people (customer_unique_key). customer_key is issued per order in this dataset, so
+      counting it counts orders, not customers.
+    gold_sql: SELECT count(DISTINCT customer_unique_key) AS customers FROM analytics.orders
+    comparator: {type: scalar}
+    grain: person
+    refs: {assets: [asset.analytics.orders], metrics: [metric.distinct_customers], terms: [term.customer]}
+
+  - id: cf-003
+    split: dev
+    category: basic_count
+    difficulty: easy
+    question: How many sellers are there?
+    interpretation: Rows in the sellers table (one per seller_id).
+    gold_sql: SELECT count(*) AS sellers FROM analytics.sellers
+    comparator: {type: scalar}
+    grain: seller
+    refs: {assets: [asset.analytics.sellers]}
+
+  - id: cf-005
+    split: heldout
+    category: basic_count
+    difficulty: easy
+    question: How many distinct product categories appear in the product catalog?
+    interpretation: Distinct non-null product_category_name values in products (Portuguese source names).
+    gold_sql: >
+      SELECT count(DISTINCT product_category_name) AS categories
+      FROM analytics.products WHERE product_category_name IS NOT NULL
+    alternatives:
+      - interpretation: Distinct non-null English category names (two Portuguese categories have no translation).
+        gold_sql: >
+          SELECT count(DISTINCT product_category_name_english) AS categories
+          FROM analytics.products WHERE product_category_name_english IS NOT NULL
+    comparator: {type: scalar}
+    grain: product category
+    refs: {assets: [asset.analytics.products]}
+
+  - id: cf-006
+    split: heldout
+    category: basic_count
+    difficulty: easy
+    question: How many order items are recorded in total, across all order statuses?
+    interpretation: Rows in order_items (each row is one unit; the source has no quantity column).
+    gold_sql: SELECT count(*) AS order_items FROM analytics.order_items
+    comparator: {type: scalar}
+    grain: order item
+    refs: {assets: [asset.analytics.order_items], terms: [term.order_item]}
+
+  - id: cf-007
+    split: heldout
+    category: basic_count
+    difficulty: medium
+    question: How many orders have at least one review?
+    interpretation: Distinct order_id values present in order_reviews.
+    gold_sql: SELECT count(DISTINCT order_id) AS reviewed_orders FROM analytics.order_reviews
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.order_reviews]}
+
+  - id: cf-008
+    split: dev
+    category: basic_count
+    difficulty: easy
+    question: How many orders were canceled?
+    interpretation: order_status = 'canceled' ('unavailable' is a different status).
+    gold_sql: SELECT count(*) AS canceled_orders FROM analytics.orders WHERE order_status = 'canceled'
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.orders], metrics: [metric.canceled_order_count], terms: [term.canceled_order]}
+
+  - id: cf-009
+    split: heldout
+    category: filtering
+    difficulty: easy
+    question: How many orders were paid (at least partly) with boleto?
+    interpretation: Distinct orders with at least one payment row of type 'boleto'.
+    gold_sql: >
+      SELECT count(DISTINCT order_id) AS orders FROM analytics.order_payments WHERE payment_type = 'boleto'
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.order_payments], terms: [term.boleto]}
+
+  - id: cf-010
+    split: heldout
+    category: filtering
+    difficulty: medium
+    question: How many distinct customers have a customer record in the state of São Paulo (SP)?
+    interpretation: Distinct customer_unique_key among customer records with customer_state = 'SP'.
+    gold_sql: >
+      SELECT count(DISTINCT customer_unique_key) AS customers FROM analytics.customers WHERE customer_state = 'SP'
+    comparator: {type: scalar}
+    grain: person
+    refs: {assets: [asset.analytics.customers], terms: [term.customer]}
+
+  - id: cf-012
+    split: heldout
+    category: filtering
+    difficulty: easy
+    question: How many products weigh more than 10 kg?
+    interpretation: product_weight_g > 10000 (grams).
+    gold_sql: SELECT count(*) AS products FROM analytics.products WHERE product_weight_g > 10000
+    comparator: {type: scalar}
+    grain: product
+    refs: {assets: [asset.analytics.products]}
+
+  - id: cf-013
+    split: heldout
+    category: filtering
+    difficulty: medium
+    question: How many orders contain more than 5 items?
+    interpretation: Orders whose number of order_items rows is greater than 5.
+    gold_sql: >
+      SELECT count(*) AS orders FROM (
+        SELECT order_id FROM analytics.order_items GROUP BY order_id HAVING count(*) > 5
+      ) AS t
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.order_items]}
+
+  - id: cf-015
+    split: dev
+    category: filtering
+    difficulty: easy
+    question: How many orders have the status 'unavailable'?
+    interpretation: order_status = 'unavailable'.
+    gold_sql: SELECT count(*) AS orders FROM analytics.orders WHERE order_status = 'unavailable'
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.orders], terms: [term.order_status]}
+
+  - id: cf-016
+    split: dev
+    category: date_range
+    difficulty: easy
+    question: How many orders were placed in 2017?
+    interpretation: Orders whose purchase timestamp falls in calendar year 2017 (all statuses).
+    gold_sql: SELECT count(*) AS orders FROM analytics.orders WHERE year(order_purchase_timestamp) = 2017
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.orders], terms: [term.purchase_timestamp]}
+
+  - id: cf-017
+    split: heldout
+    category: date_range
+    difficulty: medium
+    question: How many orders were delivered in March 2018?
+    interpretation: >
+      Orders with status 'delivered' whose customer delivery timestamp falls in March 2018.
+    gold_sql: >
+      SELECT count(*) AS orders FROM analytics.orders
+      WHERE order_status = 'delivered'
+        AND order_delivered_customer_date >= TIMESTAMP '2018-03-01'
+        AND order_delivered_customer_date < TIMESTAMP '2018-04-01'
+    alternatives:
+      - interpretation: Delivered-status orders purchased in March 2018 (purchase-date attribution).
+        gold_sql: >
+          SELECT count(*) AS orders FROM analytics.orders
+          WHERE order_status = 'delivered'
+            AND order_purchase_timestamp >= TIMESTAMP '2018-03-01'
+            AND order_purchase_timestamp < TIMESTAMP '2018-04-01'
+      - interpretation: Orders of any status whose customer delivery timestamp falls in March 2018.
+        gold_sql: >
+          SELECT count(*) AS orders FROM analytics.orders
+          WHERE order_delivered_customer_date >= TIMESTAMP '2018-03-01'
+            AND order_delivered_customer_date < TIMESTAMP '2018-04-01'
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.orders], terms: [term.delivered_order]}
+
+  - id: cf-018
+    split: heldout
+    category: date_range
+    difficulty: easy
+    question: How many orders were placed on 24 November 2017 (Black Friday)?
+    interpretation: Purchase timestamp on calendar date 2017-11-24.
+    gold_sql: >
+      SELECT count(*) AS orders FROM analytics.orders
+      WHERE CAST(order_purchase_timestamp AS DATE) = DATE '2017-11-24'
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.orders]}
+
+  - id: cf-019
+    split: heldout
+    category: date_range
+    difficulty: medium
+    question: How many orders were placed in each month of 2018?
+    interpretation: Order count grouped by purchase year-month for 2018 (months with orders only).
+    gold_sql: >
+      SELECT strftime(order_purchase_timestamp, '%Y-%m') AS month, count(*) AS orders
+      FROM analytics.orders WHERE year(order_purchase_timestamp) = 2018
+      GROUP BY 1 ORDER BY 1
+    comparator: {type: rows, ordered: false, month_columns: [month]}
+    grain: month
+    refs: {assets: [asset.analytics.orders]}
+
+  - id: cf-020
+    split: heldout
+    category: date_range
+    difficulty: medium
+    question: In which month were the most orders placed?
+    interpretation: The purchase year-month with the highest order count.
+    gold_sql: >
+      SELECT strftime(order_purchase_timestamp, '%Y-%m') AS month
+      FROM analytics.orders GROUP BY 1 ORDER BY count(*) DESC LIMIT 1
+    comparator: {type: rows, ordered: false, month_columns: [month]}
+    grain: month
+    refs: {assets: [asset.analytics.orders]}
+
+  - id: cf-022
+    split: heldout
+    category: date_range
+    difficulty: hard
+    question: What was the total product sales value for orders purchased in Q4 2017?
+    interpretation: >
+      Sum of order_items.price (excluding freight) for items whose order was purchased between
+      2017-10-01 and 2017-12-31, all order statuses.
+    gold_sql: >
+      SELECT sum(i.price) AS product_sales_value
+      FROM analytics.order_items AS i JOIN analytics.orders AS o ON o.order_id = i.order_id
+      WHERE o.order_purchase_timestamp >= TIMESTAMP '2017-10-01'
+        AND o.order_purchase_timestamp < TIMESTAMP '2018-01-01'
+    comparator: {type: scalar}
+    grain: order item
+    refs: {assets: [asset.analytics.order_items, asset.analytics.orders], metrics: [metric.product_sales_value]}
+
+  - id: cf-023
+    split: heldout
+    category: date_range
+    difficulty: medium
+    question: How many orders were placed on weekends (Saturday or Sunday) in 2017?
+    interpretation: Purchase timestamp in 2017 falling on a Saturday or Sunday.
+    gold_sql: >
+      SELECT count(*) AS orders FROM analytics.orders
+      WHERE year(order_purchase_timestamp) = 2017 AND dayofweek(order_purchase_timestamp) IN (0, 6)
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.orders]}
+
+  - id: cf-024
+    split: dev
+    category: aggregation
+    difficulty: easy
+    question: What is the average price of an order item?
+    interpretation: Mean of order_items.price in BRL.
+    gold_sql: SELECT avg(price) AS avg_item_price FROM analytics.order_items
+    comparator: {type: scalar}
+    grain: order item
+    refs: {assets: [asset.analytics.order_items]}
+
+  - id: cf-025
+    split: heldout
+    category: aggregation
+    difficulty: easy
+    question: What is the total freight value charged across all order items?
+    interpretation: Sum of order_items.freight_value (BRL).
+    gold_sql: SELECT sum(freight_value) AS freight_total FROM analytics.order_items
+    comparator: {type: scalar}
+    grain: order item
+    refs: {assets: [asset.analytics.order_items], metrics: [metric.freight_value_total], terms: [term.freight]}
+
+  - id: cf-027
+    split: heldout
+    category: aggregation
+    difficulty: medium
+    question: What is the average number of items per order?
+    interpretation: Mean item count over orders that have at least one item.
+    gold_sql: SELECT avg(item_count) AS avg_items FROM analytics.order_item_totals
+    alternatives:
+      - interpretation: Item rows divided by all orders (orders without items count as zero).
+        gold_sql: >
+          SELECT (SELECT count(*) FROM analytics.order_items) * 1.0 / (SELECT count(*) FROM analytics.orders) AS avg_items
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.order_item_totals]}
+
+  - id: cf-028
+    split: heldout
+    category: aggregation
+    difficulty: easy
+    question: What is the median product weight in grams?
+    interpretation: median(product_weight_g) over products with a known weight.
+    gold_sql: SELECT median(product_weight_g) AS median_weight_g FROM analytics.products
+    comparator: {type: scalar}
+    grain: product
+    refs: {assets: [asset.analytics.products]}
+
+  - id: cf-029
+    split: heldout
+    category: revenue_payment
+    difficulty: medium
+    question: What is the total amount paid by customers across all orders?
+    interpretation: Sum of order_payments.payment_value over all payment rows (vouchers included).
+    gold_sql: SELECT sum(payment_value) AS total_paid FROM analytics.order_payments
+    comparator: {type: scalar}
+    grain: payment row
+    refs: {assets: [asset.analytics.order_payments], metrics: [metric.payment_value_total], terms: [term.payment]}
+
+  - id: cf-030
+    split: heldout
+    category: reviews
+    difficulty: medium
+    question: What is the average review score?
+    interpretation: >
+      Governed definition: mean over reviewed orders of each order's mean score (each order weighted once).
+    gold_sql: SELECT avg(review_score_mean) AS avg_score FROM analytics.order_review_summary
+    alternatives:
+      - interpretation: Mean over all review rows (orders with several reviews weighted more).
+        gold_sql: SELECT avg(review_score) AS avg_score FROM analytics.order_reviews
+    comparator: {type: scalar}
+    grain: order
+    refs: {assets: [asset.analytics.order_review_summary], metrics: [metric.average_review_score], terms: [term.review_score]}
+
+  - id: cf-031
+    split: dev
+    category: grouping
+    difficulty: easy
+    question: How many orders are there in each order status?
+    interpretation: Order count grouped by order_status.
+    gold_sql: SELECT order_status, count(*) AS orders FROM analytics.orders GROUP BY 1
+    comparator: {type: rows, ordered: false}
+    grain: order status
+    refs: {assets: [asset.analytics.orders], terms: [term.order_status]}
+
+  - id: cf-032
+    split: heldout
+    category: grouping
+    difficulty: medium
+    question: How many distinct customers are there in each state?
+    interpretation: Distinct customer_unique_key per customer_state (a person with records in two states counts in both).
+    gold_sql: >
+      SELECT customer_state, count(DISTINCT customer_unique_key) AS customers
+      FROM analytics.customers GROUP BY 1
+    comparator: {type: rows, ordered: false}
+    grain: state
+    refs: {assets: [asset.analytics.customers], terms: [term.customer]}
+
+  - id: cf-033
+    split: heldout
+    category: grouping
+    difficulty: easy
+    question: What is the total payment value by payment type?
+    interpretation: Sum of payment_value grouped by payment_type.
+    gold_sql: >
+      SELECT payment_type, sum(payment_value) AS total_paid FROM analytics.order_payments GROUP BY 1
+    alternatives:
+      - interpretation: Same, omitting the 'not_defined' type (3 payment rows totalling 0.00).
+        gold_sql: >
+          SELECT payment_type, sum(payment_value) AS total_paid FROM analytics.order_payments
+          WHERE payment_type <> 'not_defined' GROUP BY 1
+    comparator: {type: rows, ordered: false}
+    grain: payment type
+    refs: {assets: [asset.analytics.order_payments], metrics: [metric.payment_value_total]}
+
+  - id: cf-035
+    split: heldout
+    category: delivery
+    difficulty: hard
+    question: What is the average delivery time in days for delivered orders, by customer state?
+    interpretation: >
+      For delivered orders with a delivery timestamp, mean of (delivered_customer_date -
+      purchase_timestamp) in fractional days, grouped by the customer's state.
+    gold_sql: >
+      SELECT c.customer_state,
+             avg(date_diff('second', o.order_purchase_timestamp, o.order_delivered_customer_date)) / 86400.0 AS avg_days
+      FROM analytics.orders AS o JOIN analytics.customers AS c ON c.customer_key = o.customer_key
+      WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+      GROUP BY 1
+    alternatives:
+      - interpretation: Whole calendar-day differences (date_diff('day', ...)) instead of fractional days.
+        gold_sql: >
+          SELECT c.customer_state,
+                 avg(date_diff('day', o.order_purchase_timestamp, o.order_delivered_customer_date)) AS avg_days
+          FROM analytics.orders AS o JOIN analytics.customers AS c ON c.customer_key = o.customer_key
+          WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+          GROUP BY 1
+    comparator: {type: rows, ordered: false, abs_tolerance: 0.05}
+    grain: state
+    refs: {assets: [asset.analytics.orders, asset.analytics.customers], metrics: [metric.average_delivery_days]}
+
+  - id: cf-037
+    split: heldout
+    category: grouping
+    difficulty: medium
+    question: How many order items were sold by sellers in each seller state?
+    interpretation: Count of order_items rows grouped by the seller's state.
+    gold_sql: >
+      SELECT s.seller_state, count(*) AS items
+      FROM analytics.order_items AS i JOIN analytics.sellers AS s ON s.seller_id = i.seller_id
+      GROUP BY 1
+    comparator: {type: rows, ordered: false}
+    grain: state
+    refs: {assets: [asset.analytics.order_items, asset.analytics.sellers]}

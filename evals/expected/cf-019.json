@@ -1,0 +1,61 @@
+{
+ "case_id": "cf-019",
+ "case_hash": "1ce39c436fb2747ec28cd85bc120514347d58a4bf0fb57eba698ae85a4097050",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:11+00:00",
+ "sql_sha256": "a920b9ff7992ba3a59c776f68a4503f6608c0801a93846587a770250e63bede6",
+ "columns": [
+  "month",
+  "orders"
+ ],
+ "column_types": [
+  "VARCHAR",
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   "2018-01",
+   7269
+  ],
+  [
+   "2018-02",
+   6728
+  ],
+  [
+   "2018-03",
+   7211
+  ],
+  [
+   "2018-04",
+   6939
+  ],
+  [
+   "2018-05",
+   6873
+  ],
+  [
+   "2018-06",
+   6167
+  ],
+  [
+   "2018-07",
+   6292
+  ],
+  [
+   "2018-08",
+   6512
+  ],
+  [
+   "2018-09",
+   16
+  ],
+  [
+   "2018-10",
+   4
+  ]
+ ],
+ "row_count": 10,
+ "alternatives": []
+}

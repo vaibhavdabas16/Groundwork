@@ -1,0 +1,12 @@
+# Gold-label review ledger. Written by `contextforge eval gold review` (human reviews) and by
+# documented AI cross-checks. ONLY entries with status human_reviewed whose case_hash and
+# expected_sha256 match the current case count as human review. AI cross-checks never do.
+reviews: []
+ai_cross_checks:
+  - date: '2026-11-20'
+    reviewer: AI subagent (Claude, general-purpose; independent of the case author context)
+    scope: all 90 cases (gold SQL, interpretations, comparators, safe-outcome labels)
+    method: read-only queries against data/warehouse/olist_serving.duckdb; read compare.py rules
+    result: no incorrect gold SQL; 7 comparator/ambiguity warnings and 5 safe-label conflicts with governed guidance
+    resolution: see evals/LABEL_CHANGELOG.md (2026-11-20 pre-lock revisions)
+    counts_as_human_review: false

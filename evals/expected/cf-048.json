@@ -1,0 +1,22 @@
+{
+ "case_id": "cf-048",
+ "case_hash": "7713bbfc06175238e32fb53584ce3ba5008dcdb5d9eb097c5179b598ccfdd7ea",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:24+00:00",
+ "sql_sha256": "26a846721a3c5a2bfaa1b5e82ddf6e2003e06f0cc81444f692e24f2ca8e855a4",
+ "columns": [
+  "sellers"
+ ],
+ "column_types": [
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   118
+  ]
+ ],
+ "row_count": 1,
+ "alternatives": []
+}

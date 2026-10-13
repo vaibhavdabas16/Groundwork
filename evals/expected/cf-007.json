@@ -1,0 +1,22 @@
+{
+ "case_id": "cf-007",
+ "case_hash": "eea376de160e9bb02060d80e8dc72d5131c05884d6ccff0d7336ee95759eb618",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:05+00:00",
+ "sql_sha256": "19347f73b3ce86e8e168aca984fa810931bdfb8b129f4fad0a8f7f2ac27a272a",
+ "columns": [
+  "reviewed_orders"
+ ],
+ "column_types": [
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   98673
+  ]
+ ],
+ "row_count": 1,
+ "alternatives": []
+}

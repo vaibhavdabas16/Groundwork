@@ -1,0 +1,22 @@
+{
+ "case_id": "cf-s04",
+ "case_hash": "600f87e6f280629e1c420f8e24cae4255616cc5859a1a82ae434495700add1eb",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:39+00:00",
+ "sql_sha256": "38865fde1e8bb87cc8c943911036d4a8749bcfdcff55a1dedb32a7779dbf7f64",
+ "columns": [
+  "avg_order_product_value"
+ ],
+ "column_types": [
+  "DOUBLE"
+ ],
+ "rows": [
+  [
+   137.75407637889444
+  ]
+ ],
+ "row_count": 1,
+ "alternatives": []
+}

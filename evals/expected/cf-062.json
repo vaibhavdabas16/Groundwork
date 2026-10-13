@@ -1,0 +1,22 @@
+{
+ "case_id": "cf-062",
+ "case_hash": "437dd31e58072d09dbbc72a6552bf07bfa456650dd020436095aa3707264dcd7",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:31+00:00",
+ "sql_sha256": "19bb14ce1e0e1df0cc39b953837794d8f46576b11f8fc6ee9658d29e86ce7c40",
+ "columns": [
+  "avg_payment_per_order"
+ ],
+ "column_types": [
+  "DOUBLE"
+ ],
+ "rows": [
+  [
+   160.9902666934835
+  ]
+ ],
+ "row_count": 1,
+ "alternatives": []
+}

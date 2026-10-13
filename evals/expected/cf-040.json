@@ -1,0 +1,33 @@
+{
+ "case_id": "cf-040",
+ "case_hash": "d839570e08bb3eb95538c2b3851c07dfb7cbfd940dea1dd85ef58263e7d4173b",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:22+00:00",
+ "sql_sha256": "eacbc39a3ae15b4552d1cedb91a4968437581341d1e29b7d0be2694b5d0efe7c",
+ "columns": [
+  "customer_state",
+  "orders"
+ ],
+ "column_types": [
+  "VARCHAR",
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   "SP",
+   41746
+  ],
+  [
+   "RJ",
+   12852
+  ],
+  [
+   "MG",
+   11635
+  ]
+ ],
+ "row_count": 3,
+ "alternatives": []
+}

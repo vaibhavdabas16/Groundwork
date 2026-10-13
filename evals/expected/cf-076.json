@@ -1,0 +1,41 @@
+{
+ "case_id": "cf-076",
+ "case_hash": "00a31f7316a93c5f630f4301b0c72e7da32e84e58235f5528651933d858830e4",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:36+00:00",
+ "sql_sha256": "dc6d6f426a4c86af7616655403861a236d0e880f89523fa3419faf150fff68a9",
+ "columns": [
+  "review_score",
+  "reviews"
+ ],
+ "column_types": [
+  "INTEGER",
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   1,
+   11424
+  ],
+  [
+   2,
+   3151
+  ],
+  [
+   3,
+   8179
+  ],
+  [
+   4,
+   19142
+  ],
+  [
+   5,
+   57328
+  ]
+ ],
+ "row_count": 5,
+ "alternatives": []
+}

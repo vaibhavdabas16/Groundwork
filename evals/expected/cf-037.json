@@ -1,0 +1,113 @@
+{
+ "case_id": "cf-037",
+ "case_hash": "935b488a03c66d07cf72d241a6cd4c7e7858070ad6f622786bcc8edaed565c2d",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:20+00:00",
+ "sql_sha256": "d265daf2827f531fe8e64339069c021747d5fd48b6894c83750dc07d59be5650",
+ "columns": [
+  "seller_state",
+  "items"
+ ],
+ "column_types": [
+  "VARCHAR",
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   "SP",
+   80342
+  ],
+  [
+   "MG",
+   8827
+  ],
+  [
+   "PR",
+   8671
+  ],
+  [
+   "DF",
+   899
+  ],
+  [
+   "RS",
+   2199
+  ],
+  [
+   "RJ",
+   4818
+  ],
+  [
+   "MA",
+   405
+  ],
+  [
+   "BA",
+   643
+  ],
+  [
+   "PI",
+   12
+  ],
+  [
+   "CE",
+   94
+  ],
+  [
+   "RN",
+   56
+  ],
+  [
+   "AC",
+   1
+  ],
+  [
+   "SC",
+   4075
+  ],
+  [
+   "GO",
+   520
+  ],
+  [
+   "ES",
+   372
+  ],
+  [
+   "RO",
+   14
+  ],
+  [
+   "MT",
+   145
+  ],
+  [
+   "PE",
+   448
+  ],
+  [
+   "SE",
+   10
+  ],
+  [
+   "MS",
+   50
+  ],
+  [
+   "PB",
+   38
+  ],
+  [
+   "PA",
+   8
+  ],
+  [
+   "AM",
+   3
+  ]
+ ],
+ "row_count": 23,
+ "alternatives": []
+}

@@ -1,0 +1,22 @@
+{
+ "case_id": "cf-061",
+ "case_hash": "4a54e0bab9bb6b0dccb27328c712e0ba75960480a79d9ad0f8ab45ea8892c9ec",
+ "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
+ "context_version": "ctx-1241c1f404c2",
+ "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-19T20:34:30+00:00",
+ "sql_sha256": "e6a05562ce66c4962658d0f917633f4b03e55ca623d33b42362c3983dcf3f9fe",
+ "columns": [
+  "orders"
+ ],
+ "column_types": [
+  "BIGINT"
+ ],
+ "rows": [
+  [
+   2961
+  ]
+ ],
+ "row_count": 1,
+ "alternatives": []
+}
