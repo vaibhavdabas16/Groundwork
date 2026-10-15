@@ -1,0 +1,133 @@
+name: live-eval
+
+# Secret-bearing live model evaluation. SECURITY:
+# - Never triggered by pull_request / pull_request_target: untrusted PR code never sees secrets.
+# - Always runs the TRUSTED default-branch code. A context-only PR can be evaluated by a maintainer
+#   via workflow_dispatch(context_pr=N): only the PR's context/ directory is fetched, as DATA,
+#   validated by trusted code, and passed with CONTEXTFORGE_CONTEXT_DIR. No PR code is executed.
+# - The API key lives in the protected `live-eval` environment (required reviewers recommended).
+# - Provider: environment variable CONTEXTFORGE_PROVIDER (openai | anthropic; default openai) with the
+#   matching secret OPENAI_API_KEY / ANTHROPIC_API_KEY; optional CONTEXTFORGE_MODEL.
+#   OpenAI has no built-in prices: set variable CONTEXTFORGE_PRICES_JSON (operator-verified prices,
+#   format in src/contextforge/agent/pricing.py) or the budgeted run is BLOCKED.
+# - Missing key => BLOCKED (exit 3) => the job FAILS. A required check can never go green unrun.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1" # weekly full experiment
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "smoke (dev split, full_context, 1 rep) or full (held-out, 3 modes x 3 reps)"
+        default: smoke
+        type: choice
+        options: [smoke, full]
+      context_pr:
+        description: "optional PR number whose context/ directory should be evaluated as data"
+        required: false
+      budget_usd:
+        description: "spend cap; reaching it marks the run INCOMPLETE (never PASS)"
+        default: "5"
+
+permissions:
+  contents: read
+
+env:
+  CONTEXTFORGE_PROVIDER: ${{ vars.CONTEXTFORGE_PROVIDER || 'openai' }}
+
+concurrency:
+  group: live-eval
+  cancel-in-progress: false
+
+jobs:
+  live-eval:
+    runs-on: ubuntu-latest
+    environment: live-eval
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.9"
+      - run: uv sync --frozen
+      - name: Credentials present?
+        id: creds
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PRICES_JSON: ${{ vars.CONTEXTFORGE_PRICES_JSON }}
+        run: |
+          case "$CONTEXTFORGE_PROVIDER" in
+            openai) KEY_NAME=OPENAI_API_KEY; KEY="$OPENAI_API_KEY";;
+            anthropic) KEY_NAME=ANTHROPIC_API_KEY; KEY="$ANTHROPIC_API_KEY";;
+            *) echo "::error::unknown CONTEXTFORGE_PROVIDER=$CONTEXTFORGE_PROVIDER"; exit 2;;
+          esac
+          if [ -z "$KEY" ]; then
+            echo "## live-eval: BLOCKED - $KEY_NAME not configured in the live-eval environment" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::live evaluation BLOCKED (missing $KEY_NAME); this is not a pass"
+            exit 3
+          fi
+          if [ -n "$PRICES_JSON" ]; then
+            printf '%s' "$PRICES_JSON" > "$RUNNER_TEMP/prices.json"
+            echo "CONTEXTFORGE_PRICES_FILE=$RUNNER_TEMP/prices.json" >> "$GITHUB_ENV"
+          fi
+      - name: Fetch candidate context from PR (data only)
+        if: ${{ github.event.inputs.context_pr != '' }}
+        env:
+          PR: ${{ github.event.inputs.context_pr }}
+        run: |
+          case "$PR" in (*[!0-9]*|'') echo "invalid PR number"; exit 2;; esac
+          git fetch --depth=1 origin "pull/${PR}/head:candidate"
+          mkdir -p candidate && git archive candidate context | tar -x -C candidate
+          uv run contextforge validate-context --path candidate/context
+          echo "CONTEXTFORGE_CONTEXT_DIR=$PWD/candidate/context" >> "$GITHUB_ENV"
+      - name: Cache source dataset
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: olist-raw-${{ hashFiles('data/manifests/olist_source_manifest.json') }}
+      - name: Build warehouse
+        run: |
+          if [ ! -f data/raw/olist/olist_orders_dataset.csv ]; then uv run contextforge acquire; fi
+          uv run contextforge build
+          uv run contextforge eval gold verify
+      - name: Run evaluation
+        id: run
+        env:
+          OPENAI_API_KEY: ${{ env.CONTEXTFORGE_PROVIDER == 'openai' && secrets.OPENAI_API_KEY || '' }}
+          ANTHROPIC_API_KEY: ${{ env.CONTEXTFORGE_PROVIDER == 'anthropic' && secrets.ANTHROPIC_API_KEY || '' }}
+          CONTEXTFORGE_MODEL: ${{ vars.CONTEXTFORGE_MODEL }}
+          SCOPE: ${{ github.event.inputs.scope || (github.event_name == 'schedule' && 'full') || 'smoke' }}
+          BUDGET: ${{ github.event.inputs.budget_usd || '5' }}
+        run: |
+          set +e
+          MODEL_ARGS=()
+          if [ -n "$CONTEXTFORGE_MODEL" ]; then MODEL_ARGS=(--model "$CONTEXTFORGE_MODEL"); fi
+          if [ "$SCOPE" = "full" ]; then
+            uv run contextforge eval run --all --split heldout --repetitions 3 --concurrency 3 \
+              --budget-usd "$BUDGET" --kind experiment --label "ci-${GITHUB_RUN_ID}" "${MODEL_ARGS[@]}" > run.json
+          else
+            uv run contextforge eval run --mode full_context --split dev --repetitions 1 \
+              --budget-usd "$BUDGET" --kind smoke --label "ci-${GITHUB_RUN_ID}" "${MODEL_ARGS[@]}" > run.json
+          fi
+          code=$?
+          cat run.json
+          echo "run_id=$(jq -r '.run_id // empty' run.json)" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Regression gate (PASS=0, FAIL=1, BLOCKED=3)
+        if: ${{ always() && steps.run.outputs.run_id != '' }}
+        run: uv run contextforge eval gate --run-id "${{ steps.run.outputs.run_id }}" | tee gate.json
+      - name: Upload artifacts (reports only; no secrets, no result rows)
+        if: ${{ always() && steps.run.outputs.run_id != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-${{ steps.run.outputs.run_id }}
+          path: |
+            data/evals/runs/${{ steps.run.outputs.run_id }}/report.md
+            data/evals/runs/${{ steps.run.outputs.run_id }}/summary.json
+            data/evals/runs/${{ steps.run.outputs.run_id }}/attempts.csv
+            gate.json

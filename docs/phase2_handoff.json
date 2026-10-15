@@ -1,0 +1,90 @@
+{
+  "phase": 2,
+  "status": "IMPLEMENTED_LIVE_EVALUATION_BLOCKED",
+  "complete": false,
+  "live_evaluation": {
+    "status": "BLOCKED",
+    "reasons": [
+      "operator chose OpenAI; OPENAI_API_KEY not set in this environment; no implicit credentials used by design"
+    ],
+    "missing_configuration": [
+      "OPENAI_API_KEY"
+    ],
+    "results": null,
+    "live_attempts_recorded": 0
+  },
+  "provider": {
+    "implemented": [
+      "openai",
+      "anthropic"
+    ],
+    "selected_by_operator": "openai",
+    "sdks": {
+      "openai": "openai 3.57.0 (Chat Completions)",
+      "anthropic": "anthropic 2.11.0 (API version 2026-10-21)"
+    },
+    "default_models": {
+      "openai": "gpt-5.5",
+      "anthropic": "claude-opus-5-5"
+    },
+    "resolved_model_ids": [],
+    "fallbacks": "disabled (no silent provider or model switching)",
+    "pricing": "OpenAI: operator-supplied CONTEXTFORGE_PRICES_FILE only, else unknown; budgeted runs on unpriced models are BLOCKED"
+  },
+  "context_modes": [
+    "raw_schema",
+    "descriptions",
+    "full_context"
+  ],
+  "evaluation_dataset": {
+    "cases": 90,
+    "answerable": 70,
+    "safe_outcome": 20,
+    "split": {
+      "dev": 20,
+      "heldout": 70
+    },
+    "status_counts": {
+      "authored": 19,
+      "sql_validated": 71,
+      "human_reviewed": 0
+    },
+    "heldout_locked": true,
+    "ai_cross_checks": 1,
+    "gold_queries_checked": 81
+  },
+  "regression_gate": {
+    "policy": "evals/regression_policy.yaml",
+    "current_verdict": "BLOCKED",
+    "exit_codes": {
+      "PASS": 0,
+      "FAIL": 1,
+      "BLOCKED": 3
+    }
+  },
+  "phase1_defects_fixed": [
+    "SQL guard rejected allow-listed dayofweek/dayofyear/dayofmonth after SQLGlot normalisation",
+    "guard CURRENT_DATE warning leaked dataset end year into every mode",
+    "gold snapshot identity depended on deployment-specific pseudonym key"
+  ],
+  "blockers": [
+    "provider credentials (OPENAI_API_KEY)",
+    "human review of gold labels (>= 50 held-out for the gate)",
+    "human certification of context (all definitions DRAFT)",
+    "Docker / make / GitHub Actions unverified locally; branch protection and live-eval environment need a repo admin",
+    "no git commits made"
+  ],
+  "docs": [
+    "docs/AGENT_ARCHITECTURE.md",
+    "docs/EVALUATION_METHODOLOGY.md",
+    "docs/EXPERIMENT_RESULTS.md",
+    "docs/PHASE_2_HANDOFF.md",
+    "docs/IMPLEMENTATION_STATUS.md"
+  ],
+  "phase3_contract": "contextforge.agent.schemas.AgentResponse via DataAgent.ask()",
+  "tests": {
+    "passed": 253,
+    "skipped": 1,
+    "skipped_reason": "live test BLOCKED (no key)"
+  }
+}
