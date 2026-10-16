@@ -1,0 +1,34 @@
+# ContextForge product configuration (copy to config/product.yaml; that file is git-ignored).
+# Identity and authorization mappings live HERE, outside context/, so the proposal system can never
+# grant itself users or reviewers. Secrets (tokens) are NEVER put in this file: use env variables.
+delivery_mode: shadow            # shadow: ANSWER outcomes are held for an answer reviewer; live: sent directly
+require_consent: true
+consent_notice_version: pilot-notice-v1
+conversation_ttl_minutes: 30
+max_clarification_turns: 2
+max_concurrent_requests: 2
+per_user_requests_per_hour: 30
+retention_days: 90
+proposal_author_id: agent.contextforge_improver
+
+slack:
+  allowed_team_ids: []           # e.g. [T0123ABCD]; empty = every event is refused
+  review_channel_id: null        # private channel where answer + proposal review cards are posted
+  notify_channel_id: null        # operational alerts
+
+users: []                       # pilot allowlist (Slack user ids from the validated event envelope)
+  # - {slack_user_id: U0123ABCD, principal: principal.local_analyst, label: pilot-01}
+
+answer_reviewers: []            # shadow-mode answer reviewers; owner_id must be a non-placeholder human in owners.yaml
+  # - {slack_user_id: U0456EFGH, owner_id: person.jane_analyst}
+
+context_reviewers: []           # context-change reviewers (domain owners)
+  # - {slack_user_id: U0789IJKL, owner_id: person.sam_owner, domains: ["commerce.*"], elevated: true, github_login: sam-gh}
+
+github:
+  repository: null               # owner/name of the context repository
+  base_branch: main
+  branch_prefix: contextforge/proposal-
+  labels: [context-change, ai-proposed]
+  auto_merge: false              # humans merge on GitHub (recommended)
+  require_github_approval: true
