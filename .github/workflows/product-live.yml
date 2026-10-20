@@ -1,0 +1,35 @@
+name: product-live
+
+# Real Slack + GitHub integration checks. Manual trigger only, TRUSTED default-branch code, secrets
+# in the protected `product-live` environment (required reviewers recommended). Missing secrets ->
+# tests skip as BLOCKED and this job FAILS (a skip is never a pass).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-integrations:
+    runs-on: ubuntu-latest
+    environment: product-live
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.9"
+      - run: uv sync --frozen
+      - name: Live Slack + GitHub checks (sandbox channel / sandbox repository)
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          CONTEXTFORGE_LIVE_SLACK_CHANNEL: ${{ vars.CONTEXTFORGE_LIVE_SLACK_CHANNEL }}
+          GITHUB_APP_ID: ${{ secrets.CF_GITHUB_APP_ID }}
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.CF_GITHUB_APP_INSTALLATION_ID }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.CF_GITHUB_APP_PRIVATE_KEY }}
+          CONTEXTFORGE_LIVE_GITHUB_REPO: ${{ vars.CONTEXTFORGE_LIVE_GITHUB_REPO }}
+        run: |
+          uv run pytest -m live tests/live/test_live_integrations.py -rs -q | tee live.txt
+          if grep -q "BLOCKED" live.txt; then echo "::error::live integration checks BLOCKED (missing secrets)"; exit 3; fi

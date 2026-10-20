@@ -1,0 +1,66 @@
+{
+  "phase": 3,
+  "status": "IMPLEMENTED_EXTERNAL_VERIFICATION_BLOCKED",
+  "complete": false,
+  "completion_levels": {
+    "implemented": true,
+    "unit_tested": true,
+    "integration_tested_real_components": true,
+    "externally_verified": false,
+    "deployed": false,
+    "used_by_real_people": false
+  },
+  "e2e_chain_stopped_at": {
+    "step": 1,
+    "reason": "no Slack app/tokens, no workspace, no pilot users; no GitHub credentials/remote; live model available (CLI smoke test passed, not via Slack)"
+  },
+  "missing_configuration": [
+    "OPENAI_API_KEY",
+    "SLACK_BOT_TOKEN",
+    "SLACK_APP_TOKEN",
+    "GITHUB_APP_ID/GITHUB_APP_INSTALLATION_ID/GITHUB_APP_PRIVATE_KEY or CONTEXTFORGE_GITHUB_TOKEN",
+    "config/product.yaml users/reviewers/team id",
+    "human owners in owners.yaml"
+  ],
+  "real_records": {
+    "users": 0,
+    "questions": 0,
+    "human_answer_approvals": 0,
+    "context_proposals_from_real_failures": 0,
+    "human_context_approvals": 0,
+    "prs_created": 0,
+    "prs_merged": 0,
+    "deployments_external": 0,
+    "local_context_releases": [
+      "ctx-1241c1f404c2"
+    ]
+  },
+  "tests": {
+    "passed": 341,
+    "skipped": 3,
+    "skipped_reason": "live Slack / GitHub BLOCKED (no credentials); 1 readiness test N/A with credentials present"
+  },
+  "defects_fixed": [
+    "agent/provenance.py crashed when the serving warehouse was missing (masked DB outages)",
+    "context version not recorded for tool-less clarification turns (stale-context check bypass)",
+    "missing AWAITING_REVIEW->BLOCKED lifecycle edge"
+  ],
+  "docs": [
+    "docs/PHASE_3_HANDOFF.md",
+    "docs/ARCHITECTURE.md",
+    "docs/SECURITY.md",
+    "docs/THREAT_MODEL.md",
+    "docs/DEPLOYMENT.md",
+    "docs/RUNBOOK.md",
+    "docs/CONTEXT_GOVERNANCE.md",
+    "docs/HUMAN_APPROVALS.md",
+    "docs/PILOT_PROTOCOL.md",
+    "docs/PILOT_RESULTS.md",
+    "docs/FINAL_EVALUATION.md",
+    "docs/DEMO_SCRIPT.md"
+  ],
+  "manual_github_settings_required": [
+    "branch protection on main with required checks ci/quality, ci/integration, ci/secrets-scan, ci/dependency-audit, ci/proposal-scope, live-eval/live-eval",
+    "protected environments live-eval and product-live with required reviewers"
+  ]
+}

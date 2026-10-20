@@ -1,0 +1,112 @@
+name: ci
+
+# Deterministic checks for every push/PR. Runs untrusted PR code WITHOUT any secrets
+# (pull_request, never pull_request_target). Live model evaluation is a separate workflow
+# (live-eval.yml) that runs only trusted code from the default branch.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: lint, types, context validation, unit tests (no dataset)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.9"
+      - run: uv sync --frozen
+      - run: uv run ruff check src tests
+      - run: uv run ruff format --check src tests
+      - run: uv run mypy
+      - run: uv run contextforge validate-context
+      - name: Unit tests (incl. proposal lifecycle, Slack Bolt + GitHub contract tests)
+        run: uv run pytest tests/unit -q
+
+  integration:
+    name: real dataset - integration, security and MCP tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.9"
+      - run: uv sync --frozen
+      - name: Cache source dataset (checksums are verified against data/manifests on build)
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: olist-raw-${{ hashFiles('data/manifests/olist_source_manifest.json') }}
+      - name: Acquire dataset (public Kaggle endpoint; set KAGGLE_* secrets if auth becomes required)
+        if: hashFiles('data/raw/olist/olist_orders_dataset.csv') == ''
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+        run: uv run contextforge acquire
+      - name: Detect upstream checksum drift
+        run: git diff --exit-code -- data/manifests/olist_source_manifest.json || echo "::warning::source manifest changed (retrieval time or upstream data)"
+      - run: uv run contextforge build
+      - run: uv run contextforge quality
+      - name: Integration, security, MCP, agent and product-flow tests (real DuckDB + MCP stdio)
+        run: uv run pytest tests/integration tests/security tests/mcp tests/agent -q
+      - name: Gold labels still execute and match the frozen held-out lock
+        run: |
+          uv run contextforge eval gold check
+          uv run contextforge eval gold verify
+      - run: uv run contextforge health
+
+  docker:
+    name: docker image builds
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t contextforge:ci .
+      - run: docker run --rm contextforge:ci validate-context
+
+  secrets-scan:
+    name: secrets scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  dependency-audit:
+    name: dependency vulnerability check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.9"
+      - run: uv export --frozen --no-hashes --no-emit-project > requirements.txt
+      - run: uvx pip-audit==2.9.0 -r requirements.txt --strict
+
+  proposal-scope:
+    name: AI-proposed context PR scope (allow-listed files, no certification)
+    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'contextforge/proposal-') || contains(github.event.pull_request.labels.*.name, 'ai-proposed'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.9"
+      - run: uv sync --frozen
+      # The checker is imported from the BASE branch so a PR cannot weaken the check it is judged by.
+      - run: |
+          git fetch origin "${{ github.base_ref }}"
+          git worktree add ../base "origin/${{ github.base_ref }}"
+          PYTHONPATH=../base/src uv run --no-sync python -m contextforge.product.scope_check --base "origin/${{ github.base_ref }}"
+      - name: Candidate context validates
+        run: uv run contextforge validate-context

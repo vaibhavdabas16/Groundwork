@@ -1,0 +1,30 @@
+# Slack app manifest for ContextForge (Socket Mode). Create the app at https://api.slack.com/apps
+# -> "From an app manifest". Minimal scopes: no channels:history (channel follow-ups must @mention
+# the bot), no users:read, no files, no admin scopes.
+display_information:
+  name: ContextForge
+  description: Governed analytics answers with SQL and definitions you can inspect.
+  background_color: "#1f2937"
+features:
+  bot_user:
+    display_name: contextforge
+    always_online: false
+  app_home:
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read   # receive @mentions in channels the bot was invited to
+      - chat:write          # post answers, status, review cards, ephemeral details
+      - im:history          # receive direct messages to the bot
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+      - message.im
+  interactivity:
+    is_enabled: true        # buttons + modals (approve / reject / details / feedback)
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false

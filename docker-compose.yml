@@ -1,0 +1,78 @@
+# ContextForge pilot deployment (single VM). NOT verified on the authoring machine (Docker was not
+# installed there); see docs/DEPLOYMENT.md for the verification checklist.
+#
+#   cp deploy/env.example deploy/.env && chmod 600 deploy/.env      # secrets (never committed)
+#   cp config/product.example.yaml config/product.yaml               # users, reviewers, channels
+#   docker compose run --rm setup                                    # download + build the warehouse
+#   docker compose run --rm app context deploy --path /app/context --actor "<your name>"
+#   docker compose up -d app                                         # Slack bot (Socket Mode) + ops endpoints
+#
+# Process model (deliberately simple): the `app` container runs the Slack runtime; every question
+# starts its own MCP server subprocess (stdio, principal + context release fixed at start), which
+# runs SQL in a killable read-only DuckDB worker subprocess. Nothing listens publicly: Socket Mode is
+# an outbound WebSocket, and the ops endpoint is published on 127.0.0.1 only.
+x-hardening: &hardening
+  read_only: true
+  tmpfs: ["/tmp:size=512m"]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: {max-size: "20m", max-file: "5"}
+
+services:
+  setup:
+    build: .
+    entrypoint: ["sh", "-c", "contextforge acquire && contextforge build && contextforge quality"]
+    env_file: [{path: deploy/.env, required: false}]
+    volumes:
+      - cf-raw:/app/data/raw
+      - cf-warehouse:/app/data/warehouse
+    profiles: [setup]
+
+  app:
+    build: .
+    <<: *hardening
+    command: ["product", "run", "--ops-host", "0.0.0.0", "--ops-port", "8088"]
+    env_file: [{path: deploy/.env, required: true}]
+    environment:
+      CONTEXTFORGE_PROVIDER: ${CONTEXTFORGE_PROVIDER:-openai}
+    volumes:
+      - cf-warehouse:/app/data/warehouse:ro          # the query worker cannot modify the warehouse
+      - cf-ops:/app/data/ops                         # operational DB, traces, MCP audit logs
+      - cf-releases:/app/data/context_releases       # immutable validated context releases
+      - cf-evals:/app/data/evals                     # proposal validation runs
+      - ./config/product.yaml:/app/config/product.yaml:ro
+    ports:
+      - "127.0.0.1:8088:8088"                        # /livez /readyz /metrics - localhost only
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8088/livez', timeout=5).status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    stop_grace_period: 120s                          # SIGTERM -> drain in-flight requests
+    mem_limit: 3g
+    cpus: 2.0
+    pids_limit: 256
+
+  mcp:
+    build: .
+    <<: *hardening
+    command: ["serve", "--transport", "stdio"]
+    stdin_open: true
+    environment:
+      CONTEXTFORGE_PRINCIPAL: principal.local_analyst
+    volumes:
+      - cf-warehouse:/app/data/warehouse:ro
+      - cf-ops:/app/data/ops
+    profiles: [tools]
+    # Remote transports are refused by the server; no ports are published.
+
+volumes:
+  cf-raw:
+  cf-warehouse:
+  cf-ops:
+  cf-releases:
+  cf-evals:
