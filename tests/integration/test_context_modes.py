@@ -14,9 +14,9 @@ from typing import Any
 
 import pytest
 
-from contextforge.config.settings import ContextMode, Settings
-from contextforge.context.loader import ContextStore
-from contextforge.service.core import ContextForgeService
+from groundwork.config.settings import ContextMode, Settings
+from groundwork.context.loader import ContextStore
+from groundwork.service.core import GroundworkService
 
 pytestmark = pytest.mark.integration
 
@@ -59,7 +59,7 @@ def forbidden_strings(store: ContextStore, *, allow_descriptions: bool) -> set[s
     return out
 
 
-def probe(svc: ContextForgeService) -> list[tuple[str, dict[str, Any]]]:
+def probe(svc: GroundworkService) -> list[tuple[str, dict[str, Any]]]:
     st = svc.store
     out: list[tuple[str, dict[str, Any]]] = []
     names = set()
@@ -114,8 +114,8 @@ def _values(obj: Any) -> str:
     return obj if isinstance(obj, str) else ""
 
 
-def _svc(settings: Settings, tmp: Path, mode: ContextMode) -> ContextForgeService:
-    return ContextForgeService(settings.model_copy(update={"data_dir": tmp}), context_mode=mode)
+def _svc(settings: Settings, tmp: Path, mode: ContextMode) -> GroundworkService:
+    return GroundworkService(settings.model_copy(update={"data_dir": tmp}), context_mode=mode)
 
 
 @pytest.mark.parametrize("mode", [ContextMode.raw_schema, ContextMode.descriptions])

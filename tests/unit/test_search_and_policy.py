@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from contextforge.context.loader import load_context
-from contextforge.context.models import Capability, Status
-from contextforge.query.executor import redact_value
-from contextforge.search.index import SearchIndex, tokenize
-from contextforge.security.policy import AccessDenied, PolicyEngine
+from groundwork.context.loader import load_context
+from groundwork.context.models import Capability, Status
+from groundwork.query.executor import redact_value
+from groundwork.search.index import SearchIndex, tokenize
+from groundwork.security.policy import AccessDenied, PolicyEngine
 
 ROOT = Path(__file__).resolve().parents[2]
 STORE = load_context(ROOT / "context")

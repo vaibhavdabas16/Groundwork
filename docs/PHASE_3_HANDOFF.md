@@ -51,7 +51,7 @@ Machine-readable summary: [`phase3_handoff.json`](phase3_handoff.json).
 | 17–18. Rerun the failing scenario; preserve before/after evidence | Implemented in validation (`reproduction` + `regression` in `validation_json`). Not run live. |
 
 ## Exact actions needed from humans
-1. ~~Provide `OPENAI_API_KEY`~~ done locally. Still needed: the same secret in the deployment and in the `live-eval` environment, and optionally `CONTEXTFORGE_PRICES_FILE`.
+1. ~~Provide `OPENAI_API_KEY`~~ done locally. Still needed: the same secret in the deployment and in the `live-eval` environment, and optionally `GROUNDWORK_PRICES_FILE`.
 2. Create the Slack app from `deploy/slack/manifest.yaml`, install it, and supply `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`. Create the reviewer channel.
 3. Commit the repository, push it to GitHub, create the GitHub App (permissions in `DEPLOYMENT.md`), and configure branch protection and the protected environments (`live-eval`, `product-live`).
 4. Add real reviewers as `kind: human` owners (by PR), and fill in `config/product.yaml`: team id, users with labels, answer and context reviewers.

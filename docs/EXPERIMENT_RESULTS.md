@@ -31,15 +31,15 @@ The full experiment is 70 held-out questions × 3 modes × 3 repetitions = 630 a
 ## How to produce the results
 
 ```bash
-export CONTEXTFORGE_PROVIDER=openai
+export GROUNDWORK_PROVIDER=openai
 export OPENAI_API_KEY=...               # in a shell or CI environment you control
-export CONTEXTFORGE_PRICES_FILE=prices.json   # verified OpenAI prices; required for --budget-usd (format: agent/pricing.py)
-uv run contextforge eval gold verify    # held-out lock intact
-uv run contextforge eval run --mode full_context --split dev --repetitions 1 --budget-usd 5   # smoke
-uv run contextforge eval run --all --split heldout --repetitions 3 --concurrency 3 \
+export GROUNDWORK_PRICES_FILE=prices.json   # verified OpenAI prices; required for --budget-usd (format: agent/pricing.py)
+uv run groundwork eval gold verify    # held-out lock intact
+uv run groundwork eval run --mode full_context --split dev --repetitions 1 --budget-usd 5   # smoke
+uv run groundwork eval run --all --split heldout --repetitions 3 --concurrency 3 \
     --budget-usd <cap> --kind experiment --label "phase2-full"
-uv run contextforge eval report --run-id <run_id>     # data/evals/runs/<run_id>/{report.md,summary.json,attempts.csv}
-uv run contextforge eval gate --run-id <run_id>
+uv run groundwork eval report --run-id <run_id>     # data/evals/runs/<run_id>/{report.md,summary.json,attempts.csv}
+uv run groundwork eval gate --run-id <run_id>
 ```
 
 Run the dev split first, and do any prompt or agent iteration on dev only. Do not tune against held-out results.

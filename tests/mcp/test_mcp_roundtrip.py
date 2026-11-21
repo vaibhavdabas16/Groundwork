@@ -15,7 +15,7 @@ import pytest
 from mcp.client.session import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
-from contextforge.config.settings import Settings
+from groundwork.config.settings import Settings
 
 pytestmark = [pytest.mark.mcp, pytest.mark.integration]
 
@@ -33,18 +33,18 @@ EXPECTED_TOOLS = {
 
 def _params(settings: Settings, tmp: Path, principal: str) -> StdioServerParameters:
     env = {
-        "CONTEXTFORGE_PRINCIPAL": principal,
-        "CONTEXTFORGE_DATA_DIR": str(tmp),  # private audit DB
-        "CONTEXTFORGE_SERVING_PATH": str(settings.serving_path),
-        "CONTEXTFORGE_WAREHOUSE_PATH": str(settings.warehouse_path),
-        "CONTEXTFORGE_CONTEXT_DIR": str(settings.context_dir),
-        "CONTEXTFORGE_ROOT": str(settings.root),
+        "GROUNDWORK_PRINCIPAL": principal,
+        "GROUNDWORK_DATA_DIR": str(tmp),  # private audit DB
+        "GROUNDWORK_SERVING_PATH": str(settings.serving_path),
+        "GROUNDWORK_WAREHOUSE_PATH": str(settings.warehouse_path),
+        "GROUNDWORK_CONTEXT_DIR": str(settings.context_dir),
+        "GROUNDWORK_ROOT": str(settings.root),
     }
     for k in ("SYSTEMROOT", "PATH", "TEMP", "TMP"):
         if k in os.environ:
             env[k] = os.environ[k]
     return StdioServerParameters(
-        command=sys.executable, args=["-m", "contextforge.mcp_server.server"], env=env, cwd=str(settings.root)
+        command=sys.executable, args=["-m", "groundwork.mcp_server.server"], env=env, cwd=str(settings.root)
     )
 
 
@@ -200,7 +200,7 @@ def test_http_transport_refused(real_warehouse: Settings) -> None:
     import subprocess
 
     proc = subprocess.run(
-        [sys.executable, "-m", "contextforge.mcp_server.server", "streamable-http"],
+        [sys.executable, "-m", "groundwork.mcp_server.server", "streamable-http"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -214,8 +214,8 @@ def test_context_modes_over_real_stdio_same_interface_neutral_instructions(
     real_warehouse: Settings, tmp_path: Path
 ) -> None:
     """The experiment condition is fixed server-side; the tool interface is identical in every mode."""
-    from contextforge.agent.mcp_client import McpToolClient, server_parameters
-    from contextforge.config.settings import ContextMode
+    from groundwork.agent.mcp_client import McpToolClient, server_parameters
+    from groundwork.config.settings import ContextMode
 
     async def one(mode: ContextMode) -> dict[str, Any]:
         params = server_parameters(

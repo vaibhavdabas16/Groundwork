@@ -1,10 +1,10 @@
 {
  "case_id": "cf-054",
  "case_hash": "e5245ce88fa2af4a8afa30094ee5cf4dcf5d42eb66c614d5f38d6a70d328803c",
- "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
- "context_version": "ctx-1241c1f404c2",
- "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
- "generated_at": "2026-11-19T20:34:27+00:00",
+ "snapshot_sha256": "snap-e36bfb688664b18cf7b9ba10",
+ "context_version": "ctx-8ea5a8a2b011+git.3257160",
+ "executed_via": "GroundworkService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-21T11:20:45+00:00",
  "sql_sha256": "7a58900613697aabf51e1ec37d59dea2180142bd8ecc670584215d462faddeb7",
  "columns": [
   "cancellation_rate"

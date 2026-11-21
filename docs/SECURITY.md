@@ -10,7 +10,7 @@ SQL and tool arguments come from an AI agent and are **untrusted**. Goals:
 - no data leaks through errors or logs.
 
 ## Trust boundary and identity
-- The caller principal is fixed **server-side** at process start (`CONTEXTFORGE_PRINCIPAL`).
+- The caller principal is fixed **server-side** at process start (`GROUNDWORK_PRINCIPAL`).
 - Principals are defined in `context/policies/policy.yaml` and map to roles and capabilities.
 - No tool argument carries identity. `request_context` is a closed schema (`extra="forbid"`), so
   `{"role": ...}` is rejected (tested over real MCP).
@@ -61,7 +61,7 @@ A tool with no permission mapping is denied (fail closed).
 
    Fault-injection tests send *unvalidated* attacks straight to the worker and confirm they fail.
 4. **Process isolation and a hard timeout.**
-   - Each query runs in a fresh `python -I -m contextforge.query.worker` process, with a minimal
+   - Each query runs in a fresh `python -I -m groundwork.query.worker` process, with a minimal
      environment (no secrets) and a temporary working directory.
    - The parent **kills** the process at the timeout. This is tested with a cross join, killed at
      about 2 s.
@@ -105,7 +105,7 @@ interfaces; this section lists the controls for each. The threat analysis is in
 | What data they may see | Policy principal mapped per user. Each request runs its own MCP server with that principal fixed at start. | Phase 1 policy engine + SQL guard |
 | May they approve an **answer** (shadow mode) | `answer_reviewers` (non-placeholder humans in `owners.yaml`); not the requester | `core.decide_answer` |
 | May they approve a **context change** | `context_reviewers`, checked for domain coverage, the elevated tier, the current revision and not being the author | `ProposalStore.decide` (backend, inside one transaction) |
-| May it merge | GitHub branch protection (required reviews + checks) **and** a ContextForge approval of the validated head SHA | `ProposalWorkflow.check_merge_eligibility` |
+| May it merge | GitHub branch protection (required reviews + checks) **and** a Groundwork approval of the validated head SHA | `ProposalWorkflow.check_merge_eligibility` |
 
 Rules that hold across all of these:
 - Text inside a message is never identity or authorization. "approved" typed in Slack does nothing (tested).
@@ -148,7 +148,7 @@ Rules that hold across all of these:
 
 ## Durable audit
 - **Append-only.** `audit_events` in `data/ops/product.sqlite`. SQLite triggers abort UPDATE and DELETE.
-- **Hash chain.** Each event stores `sha256(prev_hash | canonical event)`. `contextforge audit verify` detects:
+- **Hash chain.** Each event stores `sha256(prev_hash | canonical event)`. `groundwork audit verify` detects:
   - modified rows;
   - deleted rows (sequence gaps);
   - truncation, when you pass the exported head with `--expected-head`.

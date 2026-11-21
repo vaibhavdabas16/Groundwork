@@ -1,13 +1,13 @@
-# Slack app manifest for ContextForge (Socket Mode). Create the app at https://api.slack.com/apps
+# Slack app manifest for Groundwork (Socket Mode). Create the app at https://api.slack.com/apps
 # -> "From an app manifest". Minimal scopes: no channels:history (channel follow-ups must @mention
 # the bot), no users:read, no files, no admin scopes.
 display_information:
-  name: ContextForge
+  name: Groundwork
   description: Governed analytics answers with SQL and definitions you can inspect.
   background_color: "#1f2937"
 features:
   bot_user:
-    display_name: contextforge
+    display_name: groundwork
     always_online: false
   app_home:
     messages_tab_enabled: true

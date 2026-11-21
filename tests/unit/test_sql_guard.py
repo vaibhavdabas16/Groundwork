@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from contextforge.config.settings import QueryLimits
-from contextforge.security.sql_guard import Catalog, ColumnMeta, SqlRejected, validate_sql
+from groundwork.config.settings import QueryLimits
+from groundwork.security.sql_guard import Catalog, ColumnMeta, SqlRejected, validate_sql
 
 CAT = Catalog(
     schema_name="analytics",

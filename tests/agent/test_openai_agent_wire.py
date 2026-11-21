@@ -15,11 +15,11 @@ import httpx2
 import openai
 import pytest
 
-from contextforge.agent.factory import open_agent
-from contextforge.agent.providers.openai_provider import OpenAIProvider
-from contextforge.agent.schemas import AgentConfig, Outcome
-from contextforge.agent.traces import TraceStore
-from contextforge.config.settings import ContextMode, Settings
+from groundwork.agent.factory import open_agent
+from groundwork.agent.providers.openai_provider import OpenAIProvider
+from groundwork.agent.schemas import AgentConfig, Outcome
+from groundwork.agent.traces import TraceStore
+from groundwork.config.settings import ContextMode, Settings
 
 pytestmark = [pytest.mark.integration, pytest.mark.agent]
 

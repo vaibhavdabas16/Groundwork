@@ -14,12 +14,12 @@ from pathlib import Path
 
 import pytest
 
-from contextforge.agent.providers.base import ModelTurn, TextPart, ToolResultPart
-from contextforge.agent.providers.scripted import ScriptedProvider, turn
-from contextforge.agent.schemas import AgentConfig
-from contextforge.config.settings import ContextMode, Settings
-from contextforge.eval.harness import EvalBlocked, RunPlan, eval_paths, run_experiment
-from contextforge.eval.store import EvalStore
+from groundwork.agent.providers.base import ModelTurn, TextPart, ToolResultPart
+from groundwork.agent.providers.scripted import ScriptedProvider, turn
+from groundwork.agent.schemas import AgentConfig
+from groundwork.config.settings import ContextMode, Settings
+from groundwork.eval.harness import EvalBlocked, RunPlan, eval_paths, run_experiment
+from groundwork.eval.store import EvalStore
 
 pytestmark = [pytest.mark.integration, pytest.mark.agent]
 

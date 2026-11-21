@@ -23,7 +23,7 @@ jobs:
       - run: uv run ruff check src tests
       - run: uv run ruff format --check src tests
       - run: uv run mypy
-      - run: uv run contextforge validate-context
+      - run: uv run groundwork validate-context
       - name: Unit tests (incl. proposal lifecycle, Slack Bolt + GitHub contract tests)
         run: uv run pytest tests/unit -q
 
@@ -47,18 +47,18 @@ jobs:
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
-        run: uv run contextforge acquire
+        run: uv run groundwork acquire
       - name: Detect upstream checksum drift
         run: git diff --exit-code -- data/manifests/olist_source_manifest.json || echo "::warning::source manifest changed (retrieval time or upstream data)"
-      - run: uv run contextforge build
-      - run: uv run contextforge quality
+      - run: uv run groundwork build
+      - run: uv run groundwork quality
       - name: Integration, security, MCP, agent and product-flow tests (real DuckDB + MCP stdio)
         run: uv run pytest tests/integration tests/security tests/mcp tests/agent -q
       - name: Gold labels still execute and match the frozen held-out lock
         run: |
-          uv run contextforge eval gold check
-          uv run contextforge eval gold verify
-      - run: uv run contextforge health
+          uv run groundwork eval gold check
+          uv run groundwork eval gold verify
+      - run: uv run groundwork health
 
   docker:
     name: docker image builds
@@ -66,8 +66,8 @@ jobs:
     needs: quality
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t contextforge:ci .
-      - run: docker run --rm contextforge:ci validate-context
+      - run: docker build -t groundwork:ci .
+      - run: docker run --rm groundwork:ci validate-context
 
   secrets-scan:
     name: secrets scanning
@@ -93,7 +93,7 @@ jobs:
 
   proposal-scope:
     name: AI-proposed context PR scope (allow-listed files, no certification)
-    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'contextforge/proposal-') || contains(github.event.pull_request.labels.*.name, 'ai-proposed'))
+    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'groundwork/proposal-') || contains(github.event.pull_request.labels.*.name, 'ai-proposed'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -107,6 +107,6 @@ jobs:
       - run: |
           git fetch origin "${{ github.base_ref }}"
           git worktree add ../base "origin/${{ github.base_ref }}"
-          PYTHONPATH=../base/src uv run --no-sync python -m contextforge.product.scope_check --base "origin/${{ github.base_ref }}"
+          PYTHONPATH=../base/src uv run --no-sync python -m groundwork.product.scope_check --base "origin/${{ github.base_ref }}"
       - name: Candidate context validates
-        run: uv run contextforge validate-context
+        run: uv run groundwork validate-context

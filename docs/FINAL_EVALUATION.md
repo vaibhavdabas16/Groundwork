@@ -12,7 +12,7 @@
 | Real-user activity | **None** | See `PILOT_RESULTS.md` |
 
 ## What has been verified (machinery, not quality)
-Latest full run, with `OPENAI_API_KEY` set. Total: 341 passed, 3 skipped (live Slack and GitHub BLOCKED; one readiness test that only applies when no credentials are present). The live OpenAI test passed.
+Latest full run, after the rename to Groundwork and without a model key: 342 passed, 3 skipped (live model, Slack and GitHub BLOCKED). Before the rename, with `OPENAI_API_KEY` set, the live OpenAI test passed (341 passed, 3 skipped).
 
 | Suite | Result |
 |---|---|

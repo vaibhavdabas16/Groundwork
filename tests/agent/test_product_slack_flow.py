@@ -14,13 +14,13 @@ from typing import Any
 
 import pytest
 
-from contextforge.agent.providers.base import ProviderNotConfigured
-from contextforge.agent.providers.scripted import ScriptedProvider, turn
-from contextforge.agent.schemas import AgentConfig
-from contextforge.config.settings import Settings
-from contextforge.product.config import AnswerReviewer, PilotUser, ProductConfig, SlackSettings
-from contextforge.product.core import IncomingMessage, ProductCore
-from contextforge.product.db import Database
+from groundwork.agent.providers.base import ProviderNotConfigured
+from groundwork.agent.providers.scripted import ScriptedProvider, turn
+from groundwork.agent.schemas import AgentConfig
+from groundwork.config.settings import Settings
+from groundwork.product.config import AnswerReviewer, PilotUser, ProductConfig, SlackSettings
+from groundwork.product.core import IncomingMessage, ProductCore
+from groundwork.product.db import Database
 
 pytestmark = [pytest.mark.integration, pytest.mark.agent]
 

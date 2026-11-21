@@ -12,7 +12,7 @@ impossible. That is deliberate.
 | `verified` | A named human with certification rights reviewed the evidence and approved it. | Preferred source of truth. |
 | `deprecated` | Must not be used. Needs `deprecated_reason` and should name `replaced_by`. | Always surfaced, with a do-not-use warning. |
 
-## Rules enforced by `contextforge validate-context`
+## Rules enforced by `groundwork validate-context`
 - `verified` requires `certified_by`, `certified_at` and `decision_ref`.
 - The certifier must be an owner of `kind: human` with `can_certify: true` and `placeholder: false`.
 - The owning team or person must not be a placeholder.
@@ -32,7 +32,7 @@ impossible. That is deliberate.
    - evidence: executed results, the `double_counting_check`, and the relevant `data/manifests/dq_report.json` checks;
    - the open ambiguities listed in the definition (status filters, time zone, freight inclusion, ...).
 3. **Reviewer checks.** The reviewer, a domain owner:
-   - runs the metric SQL through `contextforge query`;
+   - runs the metric SQL through `groundwork query`;
    - checks grain and fanout with `get_join_path`;
    - resolves each listed ambiguity. Resolving one is a *decision*, so record it in the PR.
 4. **Update the definition.** Set `owner` to a real team, `sql_status: approved`, and

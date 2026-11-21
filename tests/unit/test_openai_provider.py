@@ -15,17 +15,17 @@ import httpx2
 import openai
 import pytest
 
-from contextforge.agent import pricing
-from contextforge.agent.providers.base import (
+from groundwork.agent import pricing
+from groundwork.agent.providers.base import (
     ProviderError,
     ProviderNotConfigured,
     TextPart,
     ToolResultPart,
     ToolSpec,
 )
-from contextforge.agent.providers.openai_provider import DEFAULT_BASE_URL, OpenAIProvider
-from contextforge.agent.providers.registry import make_provider
-from contextforge.agent.schemas import AgentConfig, UsageInfo
+from groundwork.agent.providers.openai_provider import DEFAULT_BASE_URL, OpenAIProvider
+from groundwork.agent.providers.registry import make_provider
+from groundwork.agent.schemas import AgentConfig, UsageInfo
 
 TOOLS = [
     ToolSpec(
@@ -128,7 +128,7 @@ def test_claude_model_with_openai_provider_is_a_config_error() -> None:
 
 def test_ambient_base_url_is_ignored(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENAI_BASE_URL", "https://evil.example/v1")
-    monkeypatch.delenv("CONTEXTFORGE_OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("GROUNDWORK_OPENAI_BASE_URL", raising=False)
     rec = Recorder([httpx2.Response(200, json=_response(content="ok"))])
     p = provider(rec)
     asyncio.run(p.start("S", TOOLS).send([TextPart("q")]))
@@ -297,8 +297,8 @@ def test_openai_models_have_no_guessed_price_but_operator_file_works(
 
 def test_budgeted_run_on_unpriced_model_is_blocked(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:
     """A budget that cannot be enforced (unknown price) must BLOCK, not silently never trigger."""
-    from contextforge.config.settings import ContextMode, get_settings
-    from contextforge.eval.harness import EvalBlocked, RunPlan, run_experiment
+    from groundwork.config.settings import ContextMode, get_settings
+    from groundwork.eval.harness import EvalBlocked, RunPlan, run_experiment
 
     monkeypatch.delenv(pricing.PRICES_FILE_ENV, raising=False)
     p = OpenAIProvider(_cfg(), api_key="x")

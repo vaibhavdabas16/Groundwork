@@ -1,4 +1,4 @@
-# ContextForge product configuration (copy to config/product.yaml; that file is git-ignored).
+# Groundwork product configuration (copy to config/product.yaml; that file is git-ignored).
 # Identity and authorization mappings live HERE, outside context/, so the proposal system can never
 # grant itself users or reviewers. Secrets (tokens) are NEVER put in this file: use env variables.
 delivery_mode: shadow            # shadow: ANSWER outcomes are held for an answer reviewer; live: sent directly
@@ -9,7 +9,7 @@ max_clarification_turns: 2
 max_concurrent_requests: 2
 per_user_requests_per_hour: 30
 retention_days: 90
-proposal_author_id: agent.contextforge_improver
+proposal_author_id: agent.groundwork_improver
 
 slack:
   allowed_team_ids: []           # e.g. [T0123ABCD]; empty = every event is refused
@@ -28,7 +28,7 @@ context_reviewers: []           # context-change reviewers (domain owners)
 github:
   repository: null               # owner/name of the context repository
   base_branch: main
-  branch_prefix: contextforge/proposal-
+  branch_prefix: groundwork/proposal-
   labels: [context-change, ai-proposed]
   auto_merge: false              # humans merge on GitHub (recommended)
   require_github_approval: true

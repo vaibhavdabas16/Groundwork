@@ -48,7 +48,7 @@ Legend:
 | Phase 1 fixes: guard day-function aliases, generic CURRENT_DATE warning, content-based snapshot id | VERIFIED | Regression tests in `tests/unit/test_sql_guard.py`, `tests/integration/test_context_modes.py`. |
 | Context modes (raw_schema / descriptions / full_context), server-side | VERIFIED | Exhaustive leakage probe; identical tool schemas over real stdio (`tests/mcp`). |
 | Provider abstraction + Anthropic adapter | VERIFIED at SDK/wire level | 11 contract tests run the real `anthropic` SDK against an HTTP mock transport (no network). **Not live-verified.** |
-| OpenAI adapter (Responses API, stateless `store=false` + encrypted reasoning replay, `--provider openai`, default model `gpt-5.5`) | **LIVE-VERIFIED (smoke)** | Moved from Chat Completions after the first live call returned HTTP 400 (gpt-5.5 rejects function tools + `reasoning_effort` on `/v1/chat/completions`). 19 contract tests run the real `openai` 3.57.0 SDK against an HTTP mock transport; `tests/agent/test_openai_agent_wire.py` drives it through the real runtime + MCP server and checks the item sequence. LIVE-VERIFIED: `tests/live/test_live_agent.py` passed against real OpenAI `gpt-5.5` (resolved `gpt-5.5-2026-04-23`); one `ask` (trace `tr-e45fdbcf8a194f9eadbce509456f269d`) answered 6,824 via real MCP + DuckDB, matching gold `cf-017`. This is a smoke check, not an evaluation. No OpenAI prices are built in: cost is reported as unknown unless `CONTEXTFORGE_PRICES_FILE` supplies operator-verified prices, and a `--budget-usd` run on an unpriced model is BLOCKED. |
+| OpenAI adapter (Responses API, stateless `store=false` + encrypted reasoning replay, `--provider openai`, default model `gpt-5.5`) | **LIVE-VERIFIED (smoke)** | Moved from Chat Completions after the first live call returned HTTP 400 (gpt-5.5 rejects function tools + `reasoning_effort` on `/v1/chat/completions`). 19 contract tests run the real `openai` 3.57.0 SDK against an HTTP mock transport; `tests/agent/test_openai_agent_wire.py` drives it through the real runtime + MCP server and checks the item sequence. LIVE-VERIFIED: `tests/live/test_live_agent.py` passed against real OpenAI `gpt-5.5` (resolved `gpt-5.5-2026-04-23`); one `ask` (trace `tr-e45fdbcf8a194f9eadbce509456f269d`) answered 6,824 via real MCP + DuckDB, matching gold `cf-017`. This is a smoke check, not an evaluation. No OpenAI prices are built in: cost is reported as unknown unless `GROUNDWORK_PRICES_FILE` supplies operator-verified prices, and a `--budget-usd` run on an unpriced model is BLOCKED. |
 | Live model calls (`ask`, `eval run`) | `ask`: **LIVE-VERIFIED (smoke)**; `eval run`: **INCOMPLETE** | `OPENAI_API_KEY` provided by the operator after Phase 3. The full experiment `run-20261121T100535-4bc95e` was stopped by the operator at 24/630 attempts (budget limit); it is not a result. no OpenAI prices are configured, so cost is reported as unknown. |
 | Agent runtime (limits, validation, structured outcomes, cancellation, tracing, MCP-only data access) | VERIFIED with real MCP + governed SQL and a scripted test double | 14 tests in `tests/agent/test_agent_runtime.py` (fault injection, labelled as such). |
 | Evaluation dataset (90 cases, 20 dev / 70 held-out) | VERIFIED (authored + SQL-validated) | `eval gold check`: 81/81 gold queries re-execute identically. |
@@ -87,3 +87,20 @@ Completion levels are kept separate. Details: `docs/PHASE_3_HANDOFF.md`.
 | Branch protection / protected environments | **NOT CONFIGURED** | Needs a repository admin; no remote exists |
 | Real users / approvals / PRs / deployments | **NONE** | `docs/PILOT_RESULTS.md`: "Pilot prepared; no verified user activity yet." |
 | Tests overall | VERIFIED | End of Phase 3, three chunks: `tests/unit` 187 passed; `tests/agent tests/mcp tests/live` 49 passed, 3 skipped (BLOCKED: model, Slack, GitHub); `tests/integration tests/security` 105 passed. **Total 341 passed, 3 skipped.** ruff, format, mypy strict, validate-context, gold check 81/81 and gold verify are clean. |
+
+## Rename to Groundwork
+- **Scope:** the project was renamed from ContextForge to Groundwork. That covers the package
+  (`src/groundwork`), the CLI (`groundwork`), the environment variables (`GROUNDWORK_*`, which
+  replace `CONTEXTFORGE_*`), the MCP server name, the policy id (`policy.groundwork.default`) and
+  the docs.
+- **Unchanged:** `evals/` (locked) and `data/manifests/` (snapshot inputs).
+- **Snapshot id:** the snapshot id covers the warehouse build source, so the rename changed it.
+  Gold SQL was re-executed with `eval gold freeze`; all rows and columns were identical, and the
+  held-out set was re-locked with that reason (see `evals/LABEL_CHANGELOG.md`).
+- **Deployment defect found and fixed:** once the repository had git commits, every
+  `context deploy` failed verification. The source context version carries a `+git.<sha>` suffix
+  that a copied release cannot reproduce, and the pointer had already switched before
+  verification. Releases are now named by content (`ctx-<hash>`). The staged copy is verified
+  before the switch, and the previous release is restored if post-switch verification fails.
+  Regression test: `test_deploy_from_git_committed_context_uses_content_version`.
+- **Tests after the rename:** one full run, without a model key: 342 passed, 3 skipped (BLOCKED: model, Slack, GitHub). ruff, mypy (strict), `validate-context`, `eval gold check` (81/81) and `eval gold verify` are clean.

@@ -25,11 +25,11 @@ jobs:
       - name: Live Slack + GitHub checks (sandbox channel / sandbox repository)
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          CONTEXTFORGE_LIVE_SLACK_CHANNEL: ${{ vars.CONTEXTFORGE_LIVE_SLACK_CHANNEL }}
+          GROUNDWORK_LIVE_SLACK_CHANNEL: ${{ vars.GROUNDWORK_LIVE_SLACK_CHANNEL }}
           GITHUB_APP_ID: ${{ secrets.CF_GITHUB_APP_ID }}
           GITHUB_APP_INSTALLATION_ID: ${{ secrets.CF_GITHUB_APP_INSTALLATION_ID }}
           GITHUB_APP_PRIVATE_KEY: ${{ secrets.CF_GITHUB_APP_PRIVATE_KEY }}
-          CONTEXTFORGE_LIVE_GITHUB_REPO: ${{ vars.CONTEXTFORGE_LIVE_GITHUB_REPO }}
+          GROUNDWORK_LIVE_GITHUB_REPO: ${{ vars.GROUNDWORK_LIVE_GITHUB_REPO }}
         run: |
           uv run pytest -m live tests/live/test_live_integrations.py -rs -q | tee live.txt
           if grep -q "BLOCKED" live.txt; then echo "::error::live integration checks BLOCKED (missing secrets)"; exit 3; fi

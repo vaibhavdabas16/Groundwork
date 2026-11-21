@@ -7,24 +7,24 @@ install:
 	uv sync --frozen
 
 acquire:
-	uv run contextforge acquire
+	uv run groundwork acquire
 
 build:
-	uv run contextforge build
+	uv run groundwork build
 
 quality:
-	uv run contextforge quality
+	uv run groundwork quality
 
 data: acquire build quality
 
 validate:
-	uv run contextforge validate-context
+	uv run groundwork validate-context
 
 serve:
-	uv run contextforge serve
+	uv run groundwork serve
 
 health:
-	uv run contextforge health
+	uv run groundwork health
 
 lint:
 	uv run ruff check src tests
@@ -52,20 +52,20 @@ test:
 	uv run pytest -q
 
 gold-freeze:
-	uv run contextforge eval gold freeze
+	uv run groundwork eval gold freeze
 
 gold-status:
-	uv run contextforge eval gold status
+	uv run groundwork eval gold status
 
 # Live targets need ANTHROPIC_API_KEY; without it they exit 3 (BLOCKED).
 eval-smoke:
-	uv run contextforge eval run --mode full_context --split dev --repetitions 1 --budget-usd 5 --kind smoke
+	uv run groundwork eval run --mode full_context --split dev --repetitions 1 --budget-usd 5 --kind smoke
 
 eval-full:
-	uv run contextforge eval run --all --split heldout --repetitions 3 --concurrency 3 --budget-usd 250 --kind experiment
+	uv run groundwork eval run --all --split heldout --repetitions 3 --concurrency 3 --budget-usd 250 --kind experiment
 
 eval-gate:
-	uv run contextforge eval gate --run-id $(RUN_ID)
+	uv run groundwork eval gate --run-id $(RUN_ID)
 
 check: lint typecheck validate test
 

@@ -16,13 +16,13 @@ from typing import Any
 import pytest
 import yaml
 
-from contextforge.agent.factory import open_agent
-from contextforge.agent.providers.base import ModelTurn, ProviderError, TextPart, ToolResultPart, TurnUsage
-from contextforge.agent.providers.scripted import ScriptedProvider, turn
-from contextforge.agent.runtime import AgentResult
-from contextforge.agent.schemas import AgentConfig, Outcome
-from contextforge.agent.traces import TraceStore
-from contextforge.config.settings import ContextMode, Settings
+from groundwork.agent.factory import open_agent
+from groundwork.agent.providers.base import ModelTurn, ProviderError, TextPart, ToolResultPart, TurnUsage
+from groundwork.agent.providers.scripted import ScriptedProvider, turn
+from groundwork.agent.runtime import AgentResult
+from groundwork.agent.schemas import AgentConfig, Outcome
+from groundwork.agent.traces import TraceStore
+from groundwork.config.settings import ContextMode, Settings
 
 pytestmark = [pytest.mark.integration, pytest.mark.agent]
 
@@ -136,7 +136,7 @@ def test_invalid_question_needs_no_model_call(real_warehouse: Settings, tmp_path
 def test_malformed_unknown_and_invalid_tool_calls_are_contained(
     real_warehouse: Settings, tmp_path: Path
 ) -> None:
-    from contextforge.agent.providers.base import ToolCall
+    from groundwork.agent.providers.base import ToolCall
 
     malformed = ModelTurn(
         "", [ToolCall("c1", "run_query", None, "non-object input")], "tool_use", TurnUsage(), "t", None, 0
@@ -423,7 +423,7 @@ def test_context_source_unavailable(real_warehouse: Settings, tmp_path: Path) ->
         raise AssertionError("server should not start with an invalid context source")
 
     exc = asyncio.run(main())
-    from contextforge.agent.mcp_client import McpUnavailable
+    from groundwork.agent.mcp_client import McpUnavailable
 
     assert isinstance(exc, McpUnavailable)
     shutil.rmtree(broken)

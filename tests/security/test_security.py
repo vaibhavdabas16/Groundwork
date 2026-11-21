@@ -12,15 +12,15 @@ import time
 import duckdb
 import pytest
 
-from contextforge.config.settings import Settings
-from contextforge.query.executor import ExecutionError, QueryExecutor
-from contextforge.service.core import ContextForgeService
+from groundwork.config.settings import Settings
+from groundwork.query.executor import ExecutionError, QueryExecutor
+from groundwork.service.core import GroundworkService
 from tests.conftest import make_service
 
 pytestmark = [pytest.mark.security, pytest.mark.integration]
 
 
-def rejected(svc: ContextForgeService, sql: str) -> str:
+def rejected(svc: GroundworkService, sql: str) -> str:
     r = svc.run_query(sql)
     assert not r.ok, f"query unexpectedly succeeded: {sql}"
     assert r.rows == [] and r.error is not None
@@ -49,7 +49,7 @@ def rejected(svc: ContextForgeService, sql: str) -> str:
         "SELECT * FROM read_parquet('https://example.com/x.parquet')",
         "SELECT * FROM glob('data/**')",
         "SELECT content FROM read_text('data/secrets/pseudonym.key')",
-        "SELECT getenv('CONTEXTFORGE_PSEUDONYM_KEY')",
+        "SELECT getenv('GROUNDWORK_PSEUDONYM_KEY')",
         "SELECT current_setting('enable_external_access')",
         "SELECT * FROM duckdb_settings()",
         "SELECT * FROM duckdb_tables()",
@@ -61,7 +61,7 @@ def rejected(svc: ContextForgeService, sql: str) -> str:
         "CHECKPOINT",
     ],
 )
-def test_dangerous_statements_rejected(service: ContextForgeService, sql: str) -> None:
+def test_dangerous_statements_rejected(service: GroundworkService, sql: str) -> None:
     code = rejected(service, sql)
     assert code.startswith("sql_rejected."), code
 
@@ -82,11 +82,11 @@ def test_dangerous_statements_rejected(service: ContextForgeService, sql: str) -
         "SELECT geolocation_lat FROM analytics.geolocation_zip_prefix",
     ],
 )
-def test_sensitive_column_leakage_attempts_rejected(service: ContextForgeService, sql: str) -> None:
+def test_sensitive_column_leakage_attempts_rejected(service: GroundworkService, sql: str) -> None:
     assert rejected(service, sql) in ("sql_rejected.column_not_allowed", "sql_rejected.relation_not_allowed")
 
 
-def test_wildcard_returns_only_approved_columns(service: ContextForgeService) -> None:
+def test_wildcard_returns_only_approved_columns(service: GroundworkService) -> None:
     r = service.run_query("SELECT * FROM analytics.customers LIMIT 3")
     assert r.ok
     assert set(r.columns) == {"customer_key", "customer_unique_key", "customer_city", "customer_state"}
@@ -174,7 +174,7 @@ def test_long_running_query_is_killed(real_warehouse: Settings) -> None:
     assert elapsed < 10, elapsed  # hard kill, not a cooperative cancel that lets the query run on
 
 
-def test_cost_limit_rejects_huge_cross_join(service: ContextForgeService) -> None:
+def test_cost_limit_rejects_huge_cross_join(service: GroundworkService) -> None:
     r = service.run_query(SLOW_SQL)
     assert not r.ok and r.error.code in ("execution.cost_limit_exceeded", "execution.timeout")
 
@@ -252,12 +252,12 @@ def test_unauthorized_tools_rejected(isolated_settings: Settings) -> None:
         meta.close()
 
 
-def test_admin_tool_denied_to_agent(service: ContextForgeService) -> None:
+def test_admin_tool_denied_to_agent(service: GroundworkService) -> None:
     r = service.validate_context()
     assert not r.ok and r.error.code == "capability_denied"
 
 
-def test_role_cannot_be_self_asserted_via_arguments(service: ContextForgeService) -> None:
+def test_role_cannot_be_self_asserted_via_arguments(service: GroundworkService) -> None:
     for rc in (
         {"role": "role.context_admin"},
         {"principal": "principal.admin"},
@@ -293,7 +293,7 @@ def test_tool_call_budget_per_request(isolated_settings: Settings) -> None:
         svc.close()
 
 
-def test_error_messages_do_not_leak_values(service: ContextForgeService) -> None:
+def test_error_messages_do_not_leak_values(service: GroundworkService) -> None:
     r = service.run_query("SELECT CAST(order_status AS INTEGER) FROM analytics.orders")
     assert not r.ok
     assert "delivered" not in r.error.message and "canceled" not in r.error.message

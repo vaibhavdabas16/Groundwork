@@ -2,7 +2,7 @@
 
 ## Status: Pilot prepared; no verified user activity yet.
 
-No real user has used ContextForge. These numbers do not exist yet:
+No real user has used Groundwork. These numbers do not exist yet:
 - pilot users;
 - questions;
 - reviewer decisions;
@@ -19,11 +19,11 @@ This file contains no invented numbers.
 | Model credentials (`OPENAI_API_KEY`) | **Not set** in the development environment. |
 | Deployment on a VM | **Not done.** |
 
-`contextforge pilot report` on the development database returns `"status": "Pilot prepared; no verified user activity yet."` with `questions: 0`. That state is asserted by `tests/integration/test_product_ops.py`.
+`groundwork pilot report` on the development database returns `"status": "Pilot prepared; no verified user activity yet."` with `questions: 0`. That state is asserted by `tests/integration/test_product_ops.py`.
 
 ## How to fill this in
 After day 7 of `PILOT_PROTOCOL.md`:
-1. Paste the output of `contextforge pilot report` here, plus a link to the exported CSV and audit JSONL.
+1. Paste the output of `groundwork pilot report` here, plus a link to the exported CSV and audit JSONL.
 2. Give the deployment id and the context release version(s) used.
 3. Give the model id.
 4. Give the dates.

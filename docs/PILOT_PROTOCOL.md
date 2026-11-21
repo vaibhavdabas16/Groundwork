@@ -20,7 +20,7 @@
 | 2–3 | C. Human correctness review: reviewers approve, correct or reject each held answer and assign a failure category to wrong ones | Every held answer has a decision |
 | 4–5 | D. Limited live answering, **only if** the human-approved rate ≥ 80% with no privacy or security violations; otherwise stay in shadow | Recorded go/no-go decision (pilot owner) |
 | 3–6 | E. Feedback and failure analysis: review the failures; proposals go through validation → PR → review | Every context-fixable failure has a proposal, a decision request or a documented reason |
-| 7 | F. Final report: `contextforge pilot report --out pilot.json`, `pilot export --out requests.csv`, `audit export` | `PILOT_RESULTS.md` filled in from those files only |
+| 7 | F. Final report: `groundwork pilot report --out pilot.json`, `pilot export --out requests.csv`, `audit export` | `PILOT_RESULTS.md` filled in from those files only |
 
 ## Measures, all from recorded data
 - Questions by outcome; clarification rate.

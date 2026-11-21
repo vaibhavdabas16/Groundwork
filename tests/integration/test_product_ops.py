@@ -12,12 +12,12 @@ from pathlib import Path
 
 import pytest
 
-from contextforge.config.settings import Settings
-from contextforge.product.audit import AuditLog
-from contextforge.product.config import ProductConfig
-from contextforge.product.db import Database
-from contextforge.product.deployment import ContextDeployer
-from contextforge.product.ops import pilot_report, readiness, serve_ops, snapshot
+from groundwork.config.settings import Settings
+from groundwork.product.audit import AuditLog
+from groundwork.product.config import ProductConfig
+from groundwork.product.db import Database
+from groundwork.product.deployment import ContextDeployer
+from groundwork.product.ops import pilot_report, readiness, serve_ops, snapshot
 
 pytestmark = pytest.mark.integration
 ROOT = Path(__file__).resolve().parents[2]
@@ -56,17 +56,17 @@ def test_readiness_requires_a_deployed_release_and_endpoints_serve(
         urllib.request.urlopen(f"http://127.0.0.1:{port}/readyz")
     assert ei.value.code == 503
     metrics = urllib.request.urlopen(f"http://127.0.0.1:{port}/metrics").read().decode()
-    assert "contextforge_questions_received 0" in metrics and "contextforge_ready 0" in metrics
+    assert "groundwork_questions_received 0" in metrics and "groundwork_ready 0" in metrics
     srv.shutdown()
 
 
 def test_cli_reports_blocked_without_slack_or_github_credentials(tmp_path: Path) -> None:
     env = {
-        k: v for k, v in os.environ.items() if not k.startswith(("SLACK_", "GITHUB_", "CONTEXTFORGE_GITHUB"))
+        k: v for k, v in os.environ.items() if not k.startswith(("SLACK_", "GITHUB_", "GROUNDWORK_GITHUB"))
     }
-    env["CONTEXTFORGE_OPS_DB"] = str(tmp_path / "ops.sqlite")
+    env["GROUNDWORK_OPS_DB"] = str(tmp_path / "ops.sqlite")
     r = subprocess.run(
-        [sys.executable, "-m", "contextforge.cli", "product", "run"],
+        [sys.executable, "-m", "groundwork.cli", "product", "run"],
         cwd=ROOT,
         env=env,
         capture_output=True,
@@ -87,12 +87,12 @@ def test_backup_is_consistent_and_chain_verifies(tmp_path: Path) -> None:
             resource_type="request",
             resource_id=f"r{i}",
         )
-    env = dict(os.environ, CONTEXTFORGE_OPS_DB=str(tmp_path / "ops.sqlite"))
+    env = dict(os.environ, GROUNDWORK_OPS_DB=str(tmp_path / "ops.sqlite"))
     r = subprocess.run(
         [
             sys.executable,
             "-m",
-            "contextforge.cli",
+            "groundwork.cli",
             "opsdb",
             "backup",
             "--out",

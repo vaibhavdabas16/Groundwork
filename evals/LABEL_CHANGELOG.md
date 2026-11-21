@@ -33,3 +33,8 @@ deliberate context-dependence test; cf-082 scores only the value, not the deprec
 - fingerprint: fb771b63e298df9d (70 cases)
 - reason: Snapshot identity changed from the serving-DB file checksum (deployment-specific: depends on the pseudonymisation key) to a content-based snapshot_id (source checksums + build code). Labels, gold SQL and expected rows are unchanged; no agent run existed.
 - changed cases: cf-002, cf-005, cf-006, cf-007, cf-009, cf-010, cf-012, cf-013, cf-017, cf-018, cf-019, cf-020, cf-022, cf-023, cf-025, cf-027, cf-028, cf-029, cf-030, cf-032, cf-033, cf-035, cf-037, cf-039, cf-040, cf-041, cf-044, cf-046, cf-048, cf-049, cf-050, cf-051, cf-053, cf-054, cf-055, cf-056, cf-057, cf-058, cf-059, cf-060, cf-062, cf-066, cf-067, cf-068, cf-070, cf-071, cf-072, cf-074, cf-075, cf-077, cf-078, cf-080, cf-081, cf-082, cf-083, cf-s04
+
+## 2026-11-21T11:21:08+00:00 - held-out re-lock
+- fingerprint: 6303fabda4cca300 (70 cases)
+- reason: Project rename ContextForge -> Groundwork changed the bytes of warehouse/build.py and schema.py (imports and messages only), which are part of the snapshot id. Gold SQL re-executed via eval gold freeze: all rows and columns identical, no label or case change.
+- changed cases: cf-002, cf-005, cf-006, cf-007, cf-009, cf-010, cf-012, cf-013, cf-017, cf-018, cf-019, cf-020, cf-022, cf-023, cf-025, cf-027, cf-028, cf-029, cf-030, cf-032, cf-033, cf-035, cf-037, cf-039, cf-040, cf-041, cf-044, cf-046, cf-048, cf-049, cf-050, cf-051, cf-053, cf-054, cf-055, cf-056, cf-057, cf-058, cf-059, cf-060, cf-062, cf-066, cf-067, cf-068, cf-070, cf-071, cf-072, cf-074, cf-075, cf-077, cf-078, cf-080, cf-081, cf-082, cf-083, cf-s04

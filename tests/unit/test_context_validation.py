@@ -6,9 +6,9 @@ from pathlib import Path
 
 import yaml
 
-from contextforge.context.loader import load_context
-from contextforge.context.models import Status
-from contextforge.context.validation import errors, validate_directory
+from groundwork.context.loader import load_context
+from groundwork.context.models import Status
+from groundwork.context.validation import errors, validate_directory
 
 ROOT = Path(__file__).resolve().parents[2]
 

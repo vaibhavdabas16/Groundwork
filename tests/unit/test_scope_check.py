@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from contextforge.product.scope_check import main
+from groundwork.product.scope_check import main
 
 GIT = shutil.which("git")
 pytestmark = pytest.mark.skipif(GIT is None, reason="git not installed")
@@ -41,7 +41,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     _git(r, "init", "-q", "-b", "main")
     _git(r, "add", "-A")
     _git(r, "commit", "-qm", "base")
-    _git(r, "checkout", "-qb", "contextforge/proposal-x")
+    _git(r, "checkout", "-qb", "groundwork/proposal-x")
     monkeypatch.chdir(r)
     return r
 

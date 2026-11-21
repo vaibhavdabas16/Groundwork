@@ -1,9 +1,9 @@
 """LIVE model tests (real provider API calls; cost money). Run with: ``uv run pytest -m live tests/live``.
 
-The provider is chosen by ``CONTEXTFORGE_PROVIDER`` (anthropic | openai; default anthropic) and the
-model by ``CONTEXTFORGE_LIVE_MODEL`` (default per provider). Without that provider's API key
+The provider is chosen by ``GROUNDWORK_PROVIDER`` (anthropic | openai; default anthropic) and the
+model by ``GROUNDWORK_LIVE_MODEL`` (default per provider). Without that provider's API key
 (ANTHROPIC_API_KEY / OPENAI_API_KEY) these tests are SKIPPED with reason "BLOCKED" - a skip is never a pass,
-and CI's live job uses ``contextforge eval gate`` (exit 3 = BLOCKED) as the required check.
+and CI's live job uses ``groundwork eval gate`` (exit 3 = BLOCKED) as the required check.
 """
 
 from __future__ import annotations
@@ -14,16 +14,16 @@ from pathlib import Path
 
 import pytest
 
-from contextforge.agent.factory import open_agent
-from contextforge.agent.pricing import has_price
-from contextforge.agent.providers.registry import DEFAULT_MODELS
-from contextforge.agent.schemas import AgentConfig, Outcome
-from contextforge.config.settings import ContextMode, Settings
+from groundwork.agent.factory import open_agent
+from groundwork.agent.pricing import has_price
+from groundwork.agent.providers.registry import DEFAULT_MODELS
+from groundwork.agent.schemas import AgentConfig, Outcome
+from groundwork.config.settings import ContextMode, Settings
 
 pytestmark = [pytest.mark.live, pytest.mark.integration]
 
-PROVIDER = os.environ.get("CONTEXTFORGE_PROVIDER", "anthropic")
-MODEL = os.environ.get("CONTEXTFORGE_LIVE_MODEL") or DEFAULT_MODELS.get(PROVIDER, "")
+PROVIDER = os.environ.get("GROUNDWORK_PROVIDER", "anthropic")
+MODEL = os.environ.get("GROUNDWORK_LIVE_MODEL") or DEFAULT_MODELS.get(PROVIDER, "")
 KEY_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}.get(PROVIDER, "?")
 
 if not os.environ.get(KEY_ENV):

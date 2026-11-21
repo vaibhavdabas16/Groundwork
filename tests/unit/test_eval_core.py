@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from contextforge.eval.cases import Comparator, load_cases
-from contextforge.eval.compare import compare_one, compare_to_expected
-from contextforge.eval.gate import evaluate_gate, load_policy
-from contextforge.eval.gold import GoldPaths, expected_hash, has_gold_sql, load_expected
-from contextforge.eval.stats import holm, paired_comparison, summarize
-from contextforge.eval.store import EvalStore
+from groundwork.eval.cases import Comparator, load_cases
+from groundwork.eval.compare import compare_one, compare_to_expected
+from groundwork.eval.gate import evaluate_gate, load_policy
+from groundwork.eval.gold import GoldPaths, expected_hash, has_gold_sql, load_expected
+from groundwork.eval.stats import holm, paired_comparison, summarize
+from groundwork.eval.store import EvalStore
 
 ROOT = Path(__file__).resolve().parents[2]
 SC = Comparator(type="scalar")
@@ -106,18 +106,18 @@ def test_heldout_lock_matches_committed_cases() -> None:
 
 def test_agent_code_cannot_see_labels() -> None:
     """The agent package must not import the eval package or read evals/ files."""
-    agent_dir = ROOT / "src" / "contextforge" / "agent"
+    agent_dir = ROOT / "src" / "groundwork" / "agent"
     for py in agent_dir.rglob("*.py"):
         tree = ast.parse(py.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module:
-                assert not node.module.startswith("contextforge.eval"), py
+                assert not node.module.startswith("groundwork.eval"), py
             if isinstance(node, ast.Constant) and isinstance(node.value, str):
                 assert "evals/" not in node.value and "gold_sql" not in node.value, py
 
 
 def test_prompt_has_no_dataset_specific_semantics() -> None:
-    from contextforge.agent.prompts import SYSTEM_PROMPT, user_message
+    from groundwork.agent.prompts import SYSTEM_PROMPT, user_message
 
     text = (SYSTEM_PROMPT + user_message("x")).lower()
     for forbidden in (

@@ -11,15 +11,15 @@ from typing import Any
 
 import pytest
 
-from contextforge.agent.providers.scripted import ScriptedProvider, turn
-from contextforge.config.settings import Settings
-from contextforge.product.audit import AuditLog
-from contextforge.product.config import ContextReviewer, ProductConfig
-from contextforge.product.db import Database
-from contextforge.product.deployment import ContextDeployer, DeploymentRejected
-from contextforge.product.failures import FailureCategory, FailureRecord, FailureStore
-from contextforge.product.proposals.engine import EngineBlocked, ImprovementEngine
-from contextforge.product.proposals.models import (
+from groundwork.agent.providers.scripted import ScriptedProvider, turn
+from groundwork.config.settings import Settings
+from groundwork.product.audit import AuditLog
+from groundwork.product.config import ContextReviewer, ProductConfig
+from groundwork.product.db import Database
+from groundwork.product.deployment import ContextDeployer, DeploymentRejected
+from groundwork.product.failures import FailureCategory, FailureRecord, FailureStore
+from groundwork.product.proposals.engine import EngineBlocked, ImprovementEngine
+from groundwork.product.proposals.models import (
     AddMetricCaveat,
     ChangeMetricSql,
     ContextProposal,
@@ -27,9 +27,9 @@ from contextforge.product.proposals.models import (
     SetColumnDescription,
     State,
 )
-from contextforge.product.proposals.patches import PatchError, stage
-from contextforge.product.proposals.store import ProposalStore
-from contextforge.product.proposals.validation import ProposalValidator, static_checks
+from groundwork.product.proposals.patches import PatchError, stage
+from groundwork.product.proposals.store import ProposalStore
+from groundwork.product.proposals.validation import ProposalValidator, static_checks
 
 pytestmark = pytest.mark.integration
 
@@ -40,7 +40,7 @@ def _stage(s: Settings, tmp: Path, ops: list[Any]) -> Any:
         context_dir=s.context_dir,
         serving_path=s.serving_path,
         ops=ops,
-        author="agent.contextforge_improver",
+        author="agent.groundwork_improver",
         evidence_refs=["trace:t1"],
         work_dir=tmp / "repo",
     )
@@ -98,7 +98,7 @@ def test_staging_checks_real_schema_and_keeps_objects_draft(real_warehouse: Sett
 def _failure(
     store: FailureStore, cat: FailureCategory, ids: list[str], q: str = "How many customers bought twice?"
 ) -> str:
-    from contextforge.product.failures import REMEDIATION
+    from groundwork.product.failures import REMEDIATION
 
     rem, kind = REMEDIATION[cat]
     rec = FailureRecord(
@@ -265,7 +265,7 @@ def _proposal_row(ps: ProposalStore, ops: list[Any]) -> Any:
         diffs=[],
         base_context_version="ctx",
         proposed_context_version=None,
-        author="agent.contextforge_improver",
+        author="agent.groundwork_improver",
         author_type="agent",
         trace_ids=["t1"],
         failure_ids=["f1"],
@@ -285,7 +285,7 @@ def test_validation_with_test_double_is_blocked_never_promoted(
         ps,
         [AddMetricCaveat(metric_id="metric.order_count", text="Includes canceled and unavailable orders.")],
     )
-    from contextforge.agent.schemas import AgentConfig
+    from groundwork.agent.schemas import AgentConfig
 
     v = ProposalValidator(
         real_warehouse,
@@ -363,9 +363,35 @@ def test_deploy_validates_switches_atomically_rejects_invalid_and_rolls_back(
     assert audit.verify().ok
 
 
+def test_deploy_from_git_committed_context_uses_content_version(
+    real_warehouse: Settings, tmp_path: Path
+) -> None:
+    """Regression: a context dir with git history has version ``ctx-<hash>+git.<sha>``; the copied
+    release (outside git) cannot reproduce the suffix, which made every deploy fail verification
+    AFTER the pointer had already switched. Releases are named by content and verified pre-switch."""
+    import subprocess
+
+    repo = tmp_path / "repo"
+    shutil.copytree(real_warehouse.context_dir, repo / "context")
+    git = ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@example.invalid"]
+    subprocess.run([*git, "init", "-q"], check=True)
+    subprocess.run([*git, "add", "-A"], check=True)
+    subprocess.run([*git, "commit", "-q", "-m", "context"], check=True)
+
+    from groundwork.context.loader import load_context
+
+    assert "+git." in load_context(repo / "context").version  # premise: source carries the suffix
+    db = Database(tmp_path / "ops.sqlite")
+    s = real_warehouse.model_copy(update={"data_dir": tmp_path / "data"})
+    dep = ContextDeployer(s, db, AuditLog(db), releases_root=tmp_path / "releases")
+    rel = dep.deploy(repo / "context", actor="tester")
+    assert "+git." not in rel.version and rel.version.startswith("ctx-")
+    assert dep.verify().version == rel.version
+
+
 def test_reviewer_config_requires_real_humans(real_warehouse: Settings, tmp_path: Path) -> None:
-    from contextforge.context.loader import load_context
-    from contextforge.product.config import check_against_context
+    from groundwork.context.loader import load_context
+    from groundwork.product.config import check_against_context
 
     cfg = ProductConfig(
         context_reviewers=[ContextReviewer(slack_user_id="UAAA111", owner_id="team.data_governance")]

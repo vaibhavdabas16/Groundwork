@@ -1,4 +1,4 @@
-# Phase 1 handoff - ContextForge
+# Phase 1 handoff - Groundwork
 
 Everything below was executed in this environment unless it is marked otherwise.
 The status of each component is in `docs/IMPLEMENTATION_STATUS.md`.
@@ -15,7 +15,7 @@ The diagram is in `README.md`. In layers:
 | E. MCP protocol adapter | `mcp_server/server.py` | Thin; forwards to the service |
 | F. Authorization and policy | `security/policy.py` | Principal → roles → capabilities; per-caller catalog; column sensitivity |
 | G. Query execution | `security/sql_guard.py` → `query/executor.py` → `query/worker.py` | AST validation, killable read-only worker |
-| Shared core | `service/core.py` (`ContextForgeService`) | Single entry point: auth, budget, audit, typed responses |
+| Shared core | `service/core.py` (`GroundworkService`) | Single entry point: auth, budget, audit, typed responses |
 
 ## 2. Important design decisions
 - **Two physical DuckDB files.** The raw DB holds all source columns. The serving DB holds no raw
@@ -36,7 +36,7 @@ The diagram is in `README.md`. In layers:
 
 ## 3. Repository structure
 ```
-src/contextforge/{config,ingestion,warehouse,context,search,security,query,service,mcp_server,observability,common}/, cli.py
+src/groundwork/{config,ingestion,warehouse,context,search,security,query,service,mcp_server,observability,common}/, cli.py
 context/{assets/{serving,raw},glossary,metrics,joins,policies,ownership,unsupported}/
 data/manifests/   olist_source_manifest.json, warehouse_build_manifest.json, dq_baseline.json, dq_report.json
 tests/{unit,integration,security,mcp}/
@@ -148,21 +148,21 @@ See `docs/SECURITY.md`. In summary:
 
 ## 9. Exact commands executed (this session)
 ```
-uv init --lib --name contextforge --python 3.12 --no-readme .
+uv init --lib --name groundwork --python 3.12 --no-readme .
 uv add "mcp>=1.0" duckdb "pydantic>=2" sqlglot pyyaml httpx
 uv add --dev pytest ruff mypy types-PyYAML pytest-timeout
-uv run contextforge acquire                # equivalent first run via python -c acquire(mode='kaggle')
-uv run contextforge build
-uv run contextforge quality
-uv run contextforge validate-context
-uv run contextforge search "revenue" --limit 5
-uv run contextforge query "SELECT p.product_category_name_english ... LIMIT 3"
-uv run contextforge health
+uv run groundwork acquire                # equivalent first run via python -c acquire(mode='kaggle')
+uv run groundwork build
+uv run groundwork quality
+uv run groundwork validate-context
+uv run groundwork search "revenue" --limit 5
+uv run groundwork query "SELECT p.product_category_name_english ... LIMIT 3"
+uv run groundwork health
 uv run ruff check src tests ; uv run ruff format src tests ; uv run mypy
 uv run pytest tests/unit | tests/integration | tests/security | tests/mcp | (all)
 # from-zero verification in a clean copy (no .venv, no data):
-uv sync --frozen && uv run contextforge acquire && uv run contextforge build && \
-  uv run contextforge quality && uv run contextforge validate-context && uv run pytest -q
+uv sync --frozen && uv run groundwork acquire && uv run groundwork build && \
+  uv run groundwork quality && uv run groundwork validate-context && uv run pytest -q
 ```
 
 ## 10. Actual test results
@@ -206,7 +206,7 @@ Failures found and fixed during development:
 - The audit log is local SQLite.
 
 ## 13. What Phase 2 must reuse
-- `ContextForgeService` is the only API for the agent, eval harness and Slack. Construct it with a
+- `GroundworkService` is the only API for the agent, eval harness and Slack. Construct it with a
   principal. For example, use `principal.local_strict` vs `principal.local_analyst` to compare
   context modes.
 - The context models, loader and validation, `SearchIndex`, `PolicyEngine`, `validate_sql` and

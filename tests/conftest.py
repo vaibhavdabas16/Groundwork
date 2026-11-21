@@ -13,8 +13,8 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from contextforge.config.settings import Settings, get_settings
-from contextforge.service.core import ContextForgeService
+from groundwork.config.settings import Settings, get_settings
+from groundwork.service.core import GroundworkService
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,7 +30,7 @@ def real_warehouse(settings: Settings) -> Settings:
     if missing:
         pytest.fail(
             f"Real Olist warehouse not built ({', '.join(map(str, missing))}). "
-            "Run: `make data` (or `uv run contextforge acquire && uv run contextforge build`)."
+            "Run: `make data` (or `uv run groundwork acquire && uv run groundwork build`)."
         )
     return settings
 
@@ -42,17 +42,17 @@ def isolated_settings(real_warehouse: Settings, tmp_path: Path) -> Settings:
 
 
 @pytest.fixture
-def service(isolated_settings: Settings) -> Iterator[ContextForgeService]:
-    svc = ContextForgeService(isolated_settings)
+def service(isolated_settings: Settings) -> Iterator[GroundworkService]:
+    svc = GroundworkService(isolated_settings)
     yield svc
     svc.close()
 
 
-def make_service(settings: Settings, principal: str, **limit_overrides: object) -> ContextForgeService:
+def make_service(settings: Settings, principal: str, **limit_overrides: object) -> GroundworkService:
     s = settings
     if limit_overrides:
         s = settings.model_copy(update={"limits": settings.limits.model_copy(update=limit_overrides)})
-    return ContextForgeService(s, principal_id=principal)
+    return GroundworkService(s, principal_id=principal)
 
 
 @pytest.fixture(scope="session")

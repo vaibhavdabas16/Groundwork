@@ -1,10 +1,10 @@
 {
  "case_id": "cf-008",
  "case_hash": "80a6ae8933c7f5665f841f72e30962475f5a707d4edc118e30295748ade2aee3",
- "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
- "context_version": "ctx-1241c1f404c2",
- "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
- "generated_at": "2026-11-19T20:34:06+00:00",
+ "snapshot_sha256": "snap-e36bfb688664b18cf7b9ba10",
+ "context_version": "ctx-8ea5a8a2b011+git.3257160",
+ "executed_via": "GroundworkService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-21T11:20:23+00:00",
  "sql_sha256": "64235210cd2e03d0f11c057efb51c367d7741cae21035582345658492da7febc",
  "columns": [
   "canceled_orders"

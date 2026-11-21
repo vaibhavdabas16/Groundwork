@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from contextforge.agent.schemas import (
+from groundwork.agent.schemas import (
     AgentResponse,
     CostInfo,
     ErrorDetail,
@@ -20,15 +20,15 @@ from contextforge.agent.schemas import (
     QueryRecord,
     ToolCallRecord,
 )
-from contextforge.context.loader import load_context
-from contextforge.product import blocks
-from contextforge.product.audit import AuditLog
-from contextforge.product.config import ContextReviewer, ProductConfig, check_against_context
-from contextforge.product.db import Database
-from contextforge.product.failures import FailureCategory as C
-from contextforge.product.failures import classify
-from contextforge.product.proposals.models import ContextProposal, ProposalDraft, State
-from contextforge.product.proposals.store import (
+from groundwork.context.loader import load_context
+from groundwork.product import blocks
+from groundwork.product.audit import AuditLog
+from groundwork.product.config import ContextReviewer, ProductConfig, check_against_context
+from groundwork.product.db import Database
+from groundwork.product.failures import FailureCategory as C
+from groundwork.product.failures import classify
+from groundwork.product.proposals.models import ContextProposal, ProposalDraft, State
+from groundwork.product.proposals.store import (
     DecisionRefused,
     ProposalStore,
     TransitionError,
@@ -205,7 +205,7 @@ def test_successful_answer_and_plain_clarification_are_not_failures(store: Any) 
 
 def _proposal(
     pid: str = "cfp-test",
-    author: str = "agent.contextforge_improver",
+    author: str = "agent.groundwork_improver",
     tier: str = "standard",
     domains: list[str] | None = None,
 ) -> ContextProposal:
@@ -260,7 +260,7 @@ def test_lifecycle_rejects_illegal_edges_and_approval_without_human(db: Database
         ps.transition("cfp-test", State.MERGED, actor="system")
     _to_review(ps, "cfp-test")
     with pytest.raises(TransitionError, match="authorized human"):
-        ps.transition("cfp-test", State.APPROVED, actor="agent.contextforge_improver", actor_type="agent")
+        ps.transition("cfp-test", State.APPROVED, actor="agent.groundwork_improver", actor_type="agent")
     assert ps.transition("cfp-test", State.AWAITING_REVIEW, actor="system") is False  # idempotent no-op
     again, created2 = ps.create(_proposal(pid="cfp-other"), "sig1")
     assert not created2 and again.proposal_id == "cfp-test"  # same failure signature -> no duplicate

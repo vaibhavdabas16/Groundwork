@@ -1,10 +1,10 @@
 {
  "case_id": "cf-027",
  "case_hash": "6a7a28e990f10481b61b958a2e63da8b7a907e2684df4f1257fced2a5600a578",
- "snapshot_sha256": "snap-db79b06e4e274a0393cbdf80",
- "context_version": "ctx-1241c1f404c2",
- "executed_via": "ContextForgeService.run_query (governed path, principal.local_analyst)",
- "generated_at": "2026-11-19T20:34:14+00:00",
+ "snapshot_sha256": "snap-e36bfb688664b18cf7b9ba10",
+ "context_version": "ctx-8ea5a8a2b011+git.3257160",
+ "executed_via": "GroundworkService.run_query (governed path, principal.local_analyst)",
+ "generated_at": "2026-11-21T11:20:32+00:00",
  "sql_sha256": "4bfe0340ad008c8c8e8cccdfc11fc0d3bac0347cd6f6eefcc2d01898d4a72247",
  "columns": [
   "avg_items"

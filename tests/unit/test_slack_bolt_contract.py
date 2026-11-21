@@ -17,7 +17,7 @@ from urllib.parse import urlencode
 import pytest
 from slack_bolt.request import BoltRequest
 
-from contextforge.product.slack_app import BoltGateway, build_app, web_client
+from groundwork.product.slack_app import BoltGateway, build_app, web_client
 
 SECRET = "test-signing-secret"
 

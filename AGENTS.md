@@ -4,7 +4,7 @@ Read this before changing anything. Also read `docs/IMPLEMENTATION_STATUS.md` (w
 blocked) and `docs/PHASE_1_HANDOFF.md`.
 
 ## Architecture invariants (do not break)
-1. **One entry point.** CLI, MCP and future Slack/eval code call `service.core.ContextForgeService`.
+1. **One entry point.** CLI, MCP and future Slack/eval code call `service.core.GroundworkService`.
    Nothing else may call `QueryExecutor`, `validate_sql`, or open the serving DB for agent requests.
 2. **Identity is server-side.** The principal comes from process configuration (later, an
    authenticated transport). Never add identity, role or capability fields to tool arguments.
@@ -22,16 +22,16 @@ blocked) and `docs/PHASE_1_HANDOFF.md`.
 6. **Remote MCP stays disabled** until OAuth token verification, a token-to-principal mapping and
    tests exist.
 7. **No stdout writes in the MCP server process.** Log through `observability.logging` (stderr, JSON).
-8. **Agent data access goes through MCP only.** `contextforge.agent` never opens a database and never
-   imports `contextforge.eval` or reads `evals/` (unit-tested). Gold labels must stay invisible to it.
-9. **Context modes are enforced server-side.** `CONTEXTFORGE_CONTEXT_MODE` is fixed per MCP server
-   process; restricted modes are filtered in `ContextForgeService` / `SearchIndex`. Any new tool,
+8. **Agent data access goes through MCP only.** `groundwork.agent` never opens a database and never
+   imports `groundwork.eval` or reads `evals/` (unit-tested). Gold labels must stay invisible to it.
+9. **Context modes are enforced server-side.** `GROUNDWORK_CONTEXT_MODE` is fixed per MCP server
+   process; restricted modes are filtered in `GroundworkService` / `SearchIndex`. Any new tool,
    field, warning or error text must be checked by `tests/integration/test_context_modes.py`.
-10. **No silent fallbacks.** The provider is explicit (`--provider` / `CONTEXTFORGE_PROVIDER`:
+10. **No silent fallbacks.** The provider is explicit (`--provider` / `GROUNDWORK_PROVIDER`:
     `anthropic` or `openai`). Missing provider credentials -> BLOCKED (exit 3). Never fall back to the
     scripted test double, another provider or another model; never send server-side model fallbacks.
 
-11. **Phase 3 product layer** (`contextforge.product`) never opens the warehouse for answering (the only exception is read-only `information_schema`
+11. **Phase 3 product layer** (`groundwork.product`) never opens the warehouse for answering (the only exception is read-only `information_schema`
     introspection in `proposals/patches.py` to check that cited columns exist)
     and never trusts identity from message text. Identity comes only from the validated Slack envelope.
     Authorization comes only from `config/product.yaml`, with reviewers mapped to non-placeholder humans.
@@ -60,7 +60,7 @@ blocked) and `docs/PHASE_1_HANDOFF.md`.
 ## Evaluation invariants (Phase 2)
 - Never fabricate, edit or "estimate" evaluation results. `docs/EXPERIMENT_RESULTS.md` reports only
   real runs (run id, model ids, snapshot id, prompt hash) or states BLOCKED.
-- Expected results come only from `contextforge eval gold freeze` (gold SQL on the snapshot).
+- Expected results come only from `groundwork eval gold freeze` (gold SQL on the snapshot).
 - Held-out cases are locked. Do not tune prompts/agent against held-out results. Any label change
   needs `eval gold lock --reason ...` (logged to `evals/LABEL_CHANGELOG.md`).
 - Agents may author cases and record AI cross-checks, but never `eval gold review` (human only).
@@ -85,8 +85,8 @@ blocked) and `docs/PHASE_1_HANDOFF.md`.
 - Never weaken an assertion or change expected values to make a broken implementation pass. If a
   test's *premise* was wrong, fix it and say why in the commit.
 - Fault-injection tests (sending unvalidated SQL straight to the worker) are allowed and are labelled.
-- Run before finishing: `uv run ruff check src tests && uv run mypy && uv run contextforge validate-context && uv run contextforge eval gold check && uv run pytest -q`.
-- `tests/agent` use the real MCP server and warehouse with a scripted model (fault injection); `tests/live` need the chosen provider's key (`OPENAI_API_KEY` with `CONTEXTFORGE_PROVIDER=openai`, or `ANTHROPIC_API_KEY`) and skip as BLOCKED without it. Never add guessed prices to `agent/pricing.py`; OpenAI prices come only from an operator-supplied `CONTEXTFORGE_PRICES_FILE`.
+- Run before finishing: `uv run ruff check src tests && uv run mypy && uv run groundwork validate-context && uv run groundwork eval gold check && uv run pytest -q`.
+- `tests/agent` use the real MCP server and warehouse with a scripted model (fault injection); `tests/live` need the chosen provider's key (`OPENAI_API_KEY` with `GROUNDWORK_PROVIDER=openai`, or `ANTHROPIC_API_KEY`) and skip as BLOCKED without it. Never add guessed prices to `agent/pricing.py`; OpenAI prices come only from an operator-supplied `GROUNDWORK_PRICES_FILE`.
 
 ## Product invariants (Phase 3)
 - Never report Slack, GitHub, model, deployment or user activity as verified without a real interaction.

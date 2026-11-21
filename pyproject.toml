@@ -1,5 +1,5 @@
 [project]
-name = "contextforge"
+name = "groundwork"
 version = "0.1.0"
 description = "Governed, version-controlled business context layer + secure MCP server over a DuckDB analytical warehouse (Phase 1)."
 readme = "README.md"
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-contextforge = "contextforge.cli:main"
+groundwork = "groundwork.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.13.9,<0.14.0"]
@@ -55,7 +55,7 @@ max-line-length = 130
 python_version = "3.12"
 strict = true
 warn_unused_ignores = false
-files = ["src/contextforge"]
+files = ["src/groundwork"]
 
 [[tool.mypy.overrides]]
 module = ["sqlglot.*", "duckdb.*"]

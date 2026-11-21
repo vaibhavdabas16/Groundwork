@@ -1,4 +1,4 @@
-# ContextForge image: MCP server (stdio), Slack product runtime, CLI.
+# Groundwork image: MCP server (stdio), Slack product runtime, CLI.
 # NOTE: built and run in CI only; not verified on the authoring machine (Docker was not installed).
 FROM python:3.12-slim AS base
 
@@ -24,13 +24,13 @@ RUN useradd --create-home --uid 10001 cf && mkdir -p /app/data && chown -R cf:cf
 USER cf
 
 ENV PATH="/app/.venv/bin:$PATH" \
-    CONTEXTFORGE_ROOT=/app \
-    CONTEXTFORGE_DATA_DIR=/app/data
+    GROUNDWORK_ROOT=/app \
+    GROUNDWORK_DATA_DIR=/app/data
 
 # The warehouse is NOT baked into the image (dataset license: CC BY-NC-SA 4.0).
-# Run `contextforge acquire && contextforge build` into the mounted /app/data volume first.
+# Run `groundwork acquire && groundwork build` into the mounted /app/data volume first.
 HEALTHCHECK --interval=60s --timeout=30s --start-period=10s --retries=3 \
-    CMD ["contextforge", "health"]
+    CMD ["groundwork", "health"]
 
-ENTRYPOINT ["contextforge"]
+ENTRYPOINT ["groundwork"]
 CMD ["serve", "--transport", "stdio"]

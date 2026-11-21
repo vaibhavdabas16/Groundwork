@@ -9,7 +9,7 @@ marked UNVERIFIED.
 ### `atlanhq/agent-toolkit` (https://github.com/atlanhq/agent-toolkit)
 - The README says the **local MCP server in this repo is deprecated** (maintenance-only).
   Atlan recommends its hosted, OAuth-protected remote MCP instead.
-  - **ContextForge takes no dependency on it, on `pyatlan`, or on any Atlan API.**
+  - **Groundwork takes no dependency on it, on `pyatlan`, or on any Atlan API.**
 - Local tools exposed:
 
   | Area | Tools |
@@ -39,9 +39,9 @@ marked UNVERIFIED.
 - The page's quoted accuracy-gain numbers are vendor research, not independently verified.
 
 ## 2. What we borrow
-| Idea | Where it lives in ContextForge |
+| Idea | Where it lives in Groundwork |
 |---|---|
-| Tool vocabulary (`search_assets`, asset lookup, glossary lookup, lineage/joins, governed query) | `src/contextforge/mcp_server/server.py` (8 tools) |
+| Tool vocabulary (`search_assets`, asset lookup, glossary lookup, lineage/joins, governed query) | `src/groundwork/mcp_server/server.py` (8 tools) |
 | Verified / Draft / Deprecated certification | `context/*` `certification.status`; enforced in `context/validation.py` |
 | AI drafts are a starting point, humans certify | Validation rejects AI/agent self-certification; `docs/certification_procedure.md` |
 | Policy based on meaning (sensitivity classes on columns), not only caller | `context/policies/policy.yaml` + `security/policy.py` |

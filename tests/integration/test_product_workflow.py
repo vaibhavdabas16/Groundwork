@@ -13,15 +13,15 @@ from typing import Any
 import httpx
 import pytest
 
-from contextforge.config.settings import Settings
-from contextforge.product.audit import AuditLog
-from contextforge.product.config import ContextReviewer, GitHubSettings, ProductConfig
-from contextforge.product.db import Database
-from contextforge.product.deployment import ContextDeployer
-from contextforge.product.github import GitHubClient, StaticToken
-from contextforge.product.proposals.models import ContextProposal, ProposalDraft, SetColumnDescription, State
-from contextforge.product.proposals.store import ProposalStore
-from contextforge.product.proposals.workflow import ProposalWorkflow
+from groundwork.config.settings import Settings
+from groundwork.product.audit import AuditLog
+from groundwork.product.config import ContextReviewer, GitHubSettings, ProductConfig
+from groundwork.product.db import Database
+from groundwork.product.deployment import ContextDeployer
+from groundwork.product.github import GitHubClient, StaticToken
+from groundwork.product.proposals.models import ContextProposal, ProposalDraft, SetColumnDescription, State
+from groundwork.product.proposals.store import ProposalStore
+from groundwork.product.proposals.workflow import ProposalWorkflow
 
 pytestmark = pytest.mark.integration
 
@@ -90,7 +90,7 @@ def setup(s: Settings, tmp: Path) -> tuple[Any, ProposalStore, ProposalWorkflow,
         diffs=[],
         base_context_version="ctx",
         proposed_context_version=None,
-        author="agent.contextforge_improver",
+        author="agent.groundwork_improver",
         author_type="agent",
         trace_ids=["t1"],
         failure_ids=["f1"],
@@ -131,7 +131,7 @@ def test_pr_is_opened_only_after_validation_and_is_idempotent(
         "Traces",
     ):
         assert section in body
-    head_files = fake.trees[fake.commits[fake.refs["contextforge/proposal-cfp-wf"]]["tree"]]
+    head_files = fake.trees[fake.commits[fake.refs["groundwork/proposal-cfp-wf"]]["tree"]]
     changed = {k for k, v in head_files.items() if fake.trees["t0"].get(k) != v}
     assert changed == {"context/assets/serving/dimensions.yaml"}
     assert fake.pulls[0]["reviewers"] == ["rev-gh"] and fake.refs["main"] == "c0"
@@ -152,7 +152,7 @@ def test_merge_eligibility_requires_both_human_controls(real_warehouse: Settings
     ps.decide("cfp-wf", decision="approve", slack_user_id="UREVIEW1", revision=1, config=cfg)
     ok, reasons = wf.check_merge_eligibility("cfp-wf")
     assert not ok and reasons == ["no human GitHub approval on the current head commit"]
-    head = fake.refs["contextforge/proposal-cfp-wf"]
+    head = fake.refs["groundwork/proposal-cfp-wf"]
     fake.reviews = [{"user": {"login": "rev-gh", "type": "User"}, "state": "APPROVED", "commit_id": head}]
     ok, reasons = wf.check_merge_eligibility("cfp-wf")
     assert ok and ps.get("cfp-wf").state == State.MERGE_ELIGIBLE  # type: ignore[union-attr]
@@ -170,7 +170,7 @@ def test_push_to_pr_after_approval_invalidates_it(real_warehouse: Settings, tmp_
     )
     wf.open_pull_request("cfp-wf")
     ps.decide("cfp-wf", decision="approve", slack_user_id="UREVIEW1", revision=1, config=cfg)
-    fake.refs["contextforge/proposal-cfp-wf"] = "c-someone-else"  # an extra commit pushed to the PR branch
+    fake.refs["groundwork/proposal-cfp-wf"] = "c-someone-else"  # an extra commit pushed to the PR branch
     fake.commits["c-someone-else"] = {"tree": "t0"}
     assert wf.sync("cfp-wf") == State.PROPOSED
     ok, _reasons = wf.check_merge_eligibility("cfp-wf")
@@ -187,7 +187,7 @@ def test_pr_merged_outside_the_workflow_is_not_deployed(real_warehouse: Settings
         updates={"validation_json": {"verdict": "AWAITING_REVIEW"}},
     )
     wf.open_pull_request("cfp-wf")
-    fake.pulls[0]["merged"] = True  # merged by someone on GitHub without a ContextForge approval
+    fake.pulls[0]["merged"] = True  # merged by someone on GitHub without a Groundwork approval
     assert wf.sync("cfp-wf") == State.BLOCKED
     with pytest.raises(ValueError, match="MERGED"):
         wf.deploy_merged("cfp-wf", actor="ops")

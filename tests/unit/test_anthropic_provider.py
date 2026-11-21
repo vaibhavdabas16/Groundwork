@@ -15,15 +15,15 @@ import anthropic
 import httpx2
 import pytest
 
-from contextforge.agent.providers.anthropic_provider import AnthropicProvider
-from contextforge.agent.providers.base import (
+from groundwork.agent.providers.anthropic_provider import AnthropicProvider
+from groundwork.agent.providers.base import (
     ProviderError,
     ProviderNotConfigured,
     TextPart,
     ToolResultPart,
     ToolSpec,
 )
-from contextforge.agent.schemas import AgentConfig
+from groundwork.agent.schemas import AgentConfig
 
 TOOLS = [
     ToolSpec(

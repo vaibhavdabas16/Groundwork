@@ -1,8 +1,8 @@
-# ContextForge
+# Groundwork
 
 **Governed business context for AI data agents, with a human-approved feedback loop.**
 
-ContextForge puts a version-controlled **context layer** and a secure **MCP server** in front of a
+Groundwork puts a version-controlled **context layer** and a secure **MCP server** in front of a
 real DuckDB warehouse (the public Olist e-commerce dataset). An LLM agent answers analytics
 questions through that layer and shows the SQL and definitions it used. It refuses, or asks a
 clarifying question, when the business meaning is ambiguous. Failures turn into evidence-backed
@@ -10,8 +10,8 @@ fix proposals, which reach production only through human approval, GitHub review
 
 ![Live agent answer](docs/images/06-live-agent-answer.png)
 
-<sub>A real answer from OpenAI `gpt-5.5` via `contextforge ask`. 6,824 matches the gold answer for
-eval case `cf-017`. The image is rendered from the stored trace and trimmed to the relevant fields.</sub>
+<sub>A real answer from OpenAI `gpt-5.5` via `groundwork ask`. 6,824 matches the gold answer for
+eval case `cf-017`. The image is rendered from the stored trace and trimmed to the relevant fields. The call was made before the project was renamed from ContextForge, when the command was `contextforge ask`.</sub>
 
 ## Project status
 
@@ -36,7 +36,7 @@ Given only a raw schema, an LLM writes plausible SQL that is often wrong in busi
 - **Wrong definition:** it calls item price "revenue" when three valid bases exist.
 - **Invented answers:** it answers "net revenue" even though refunds are not recorded.
 
-ContextForge fixes this with governed context:
+Groundwork fixes this with governed context:
 - definitions with an explicit grain;
 - join and fanout rules;
 - an unsupported/ambiguous register;
@@ -129,18 +129,18 @@ never counted as a pass.
 
 ```bash
 uv sync --frozen
-uv run contextforge acquire && uv run contextforge build && uv run contextforge quality
-uv run contextforge validate-context
-uv run contextforge context deploy --path context --actor "$USER"   # first validated release
+uv run groundwork acquire && uv run groundwork build && uv run groundwork quality
+uv run groundwork validate-context
+uv run groundwork context deploy --path context --actor "$USER"   # first validated release
 
 # No model key needed for these:
-uv run contextforge search "repeat customers"
-uv run contextforge define revenue
-uv run contextforge query "SELECT order_status, count(*) FROM analytics.orders GROUP BY 1"
+uv run groundwork search "repeat customers"
+uv run groundwork define revenue
+uv run groundwork query "SELECT order_status, count(*) FROM analytics.orders GROUP BY 1"
 
 # Live agent (otherwise BLOCKED, exit 3; it never falls back silently):
-export CONTEXTFORGE_PROVIDER=openai OPENAI_API_KEY=...
-uv run contextforge ask "How many orders were delivered in March 2018?"
+export GROUNDWORK_PROVIDER=openai OPENAI_API_KEY=...
+uv run groundwork ask "How many orders were delivered in March 2018?"
 ```
 
 On Windows PowerShell, set the key with `$env:OPENAI_API_KEY = "sk-..."` (current terminal) or
@@ -220,15 +220,15 @@ Approving answers in shadow mode is a separate workflow. See
 
 | Task | Command |
 |---|---|
-| Data | `contextforge acquire` · `build` · `quality` · `validate-context` · `health` |
-| MCP server (stdio) | `contextforge serve` |
-| Governed access | `contextforge search "…"` · `define <term>` · `query "SELECT …"` |
-| Agent | `contextforge ask "<question>" [--provider openai] [--model gpt-5.5] [--mode full_context]` |
-| Evaluation | `contextforge eval run\|report\|compare\|replay\|list\|gate` · `eval gold freeze\|check\|status\|lock\|verify\|review` |
-| Slack product | `contextforge product check` · `product run [--http PORT]` · `product ops` |
-| Context releases | `contextforge context deploy --path DIR\|--git-commit SHA --actor NAME` · `context rollback` · `context status` |
-| Proposals | `contextforge proposals list\|show\|draft\|validate\|open-pr\|sync\|eligible\|deploy` · `failures` |
-| Audit / pilot / ops DB | `contextforge audit verify\|export` · `pilot report\|export\|purge` · `opsdb migrate\|backup` |
+| Data | `groundwork acquire` · `build` · `quality` · `validate-context` · `health` |
+| MCP server (stdio) | `groundwork serve` |
+| Governed access | `groundwork search "…"` · `define <term>` · `query "SELECT …"` |
+| Agent | `groundwork ask "<question>" [--provider openai] [--model gpt-5.5] [--mode full_context]` |
+| Evaluation | `groundwork eval run\|report\|compare\|replay\|list\|gate` · `eval gold freeze\|check\|status\|lock\|verify\|review` |
+| Slack product | `groundwork product check` · `product run [--http PORT]` · `product ops` |
+| Context releases | `groundwork context deploy --path DIR\|--git-commit SHA --actor NAME` · `context rollback` · `context status` |
+| Proposals | `groundwork proposals list\|show\|draft\|validate\|open-pr\|sync\|eligible\|deploy` · `failures` |
+| Audit / pilot / ops DB | `groundwork audit verify\|export` · `pilot report\|export\|purge` · `opsdb migrate\|backup` |
 
 ## Running the full experiment
 
@@ -236,12 +236,12 @@ This needs a model key and a real budget: about $0.07 per attempt on `gpt-5.5`, 
 for the full 630-attempt run.
 
 ```bash
-uv run contextforge eval gold verify
-uv run contextforge eval run --all --split heldout --repetitions 3 --concurrency 3 --kind experiment --label phase2-full
-uv run contextforge eval report --run-id <id> && uv run contextforge eval gate --run-id <id>
+uv run groundwork eval gold verify
+uv run groundwork eval run --all --split heldout --repetitions 3 --concurrency 3 --kind experiment --label phase2-full
+uv run groundwork eval report --run-id <id> && uv run groundwork eval gate --run-id <id>
 ```
 
-To make a budget enforceable, set `CONTEXTFORGE_PRICES_FILE`. No OpenAI prices are built in.
+To make a budget enforceable, set `GROUNDWORK_PRICES_FILE`. No OpenAI prices are built in.
 
 ## Slack deployment (pilot)
 
@@ -266,8 +266,8 @@ Full checklist: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). Operations:
 ## Using the MCP server directly
 
 ```json
-{"mcpServers": {"contextforge": {"command": "uv", "args": ["--directory", "/path/to/contextforge", "run", "contextforge", "serve"],
-  "env": {"CONTEXTFORGE_PRINCIPAL": "principal.local_analyst"}}}}
+{"mcpServers": {"groundwork": {"command": "uv", "args": ["--directory", "/path/to/groundwork", "run", "groundwork", "serve"],
+  "env": {"GROUNDWORK_PRINCIPAL": "principal.local_analyst"}}}}
 ```
 
 **Tools:**
@@ -307,7 +307,7 @@ Remote (HTTP) MCP stays disabled until OAuth is implemented.
 ## Contributing
 
 - **Invariants:** read [`AGENTS.md`](AGENTS.md) first.
-- **Before finishing a change:** run `uv run ruff check src tests && uv run mypy && uv run contextforge validate-context && uv run contextforge eval gold check && uv run pytest -q`.
+- **Before finishing a change:** run `uv run ruff check src tests && uv run mypy && uv run groundwork validate-context && uv run groundwork eval gold check && uv run pytest -q`.
 - **Context changes:** go through PRs, and only humans certify.
 - **Held-out cases:** never edit them.
 

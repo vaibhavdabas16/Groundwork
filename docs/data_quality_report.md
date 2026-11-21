@@ -1,6 +1,6 @@
 # Data quality report - Olist Brazilian E-Commerce
 
-_Generated 2026-11-19T18:01:58+00:00 by `contextforge quality`; every number below comes from SQL executed against the real warehouse (`data/manifests/dq_report.json`)._
+_Generated 2026-11-19T18:01:58+00:00 by `groundwork quality`; every number below comes from SQL executed against the real warehouse (`data/manifests/dq_report.json`)._
 
 ## Source
 

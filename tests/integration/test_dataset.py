@@ -9,12 +9,12 @@ from decimal import Decimal
 import duckdb
 import pytest
 
-from contextforge.common.hashing import sha256_file
-from contextforge.config.settings import Settings
-from contextforge.ingestion.acquire import EXPECTED_FILES, load_manifest, raw_file, verify_raw_files
-from contextforge.warehouse.build import SERVING_SQL, build, build_manifest_path
-from contextforge.warehouse.quality import run_checks
-from contextforge.warehouse.schema import RAW_SCHEMA
+from groundwork.common.hashing import sha256_file
+from groundwork.config.settings import Settings
+from groundwork.ingestion.acquire import EXPECTED_FILES, load_manifest, raw_file, verify_raw_files
+from groundwork.warehouse.build import SERVING_SQL, build, build_manifest_path
+from groundwork.warehouse.quality import run_checks
+from groundwork.warehouse.schema import RAW_SCHEMA
 
 pytestmark = pytest.mark.integration
 
@@ -134,7 +134,7 @@ def test_serving_preserves_grain_of_source(
 
 
 def test_serving_schema_matches_context(serving_con: duckdb.DuckDBPyConnection) -> None:
-    from contextforge.context.loader import load_context
+    from groundwork.context.loader import load_context
 
     store = load_context(__import__("pathlib").Path(__file__).resolve().parents[2] / "context")
     db = {

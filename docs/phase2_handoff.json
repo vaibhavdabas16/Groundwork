@@ -29,7 +29,7 @@
     },
     "resolved_model_ids": [],
     "fallbacks": "disabled (no silent provider or model switching)",
-    "pricing": "OpenAI: operator-supplied CONTEXTFORGE_PRICES_FILE only, else unknown; budgeted runs on unpriced models are BLOCKED"
+    "pricing": "OpenAI: operator-supplied GROUNDWORK_PRICES_FILE only, else unknown; budgeted runs on unpriced models are BLOCKED"
   },
   "context_modes": [
     "raw_schema",
@@ -81,7 +81,7 @@
     "docs/PHASE_2_HANDOFF.md",
     "docs/IMPLEMENTATION_STATUS.md"
   ],
-  "phase3_contract": "contextforge.agent.schemas.AgentResponse via DataAgent.ask()",
+  "phase3_contract": "groundwork.agent.schemas.AgentResponse via DataAgent.ask()",
   "tests": {
     "passed": 253,
     "skipped": 1,

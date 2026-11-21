@@ -5,13 +5,13 @@ from __future__ import annotations
 import duckdb
 import pytest
 
-from contextforge.service.core import ContextForgeService
+from groundwork.service.core import GroundworkService
 
 pytestmark = pytest.mark.integration
 
 
 def test_every_metric_sql_executes_through_governed_path(
-    service: ContextForgeService, serving_con: duckdb.DuckDBPyConnection
+    service: GroundworkService, serving_con: duckdb.DuckDBPyConnection
 ) -> None:
     assert service.store.metrics
     for m in service.store.metrics.values():
@@ -29,7 +29,7 @@ def norm(row) -> tuple:  # type: ignore[no-untyped-def,type-arg]
     return tuple(round(float(v), 6) if isinstance(v, (float, Decimal)) else v for v in row)
 
 
-def test_metric_values_are_consistent(service: ContextForgeService) -> None:
+def test_metric_values_are_consistent(service: GroundworkService) -> None:
     v = {
         m: service.run_query(service.store.metrics[m].sql).rows[0][0]
         for m in (
@@ -53,7 +53,7 @@ def test_metric_values_are_consistent(service: ContextForgeService) -> None:
     )  # documented anti-pattern
 
 
-def test_dimension_breakdowns_reconcile_to_total(service: ContextForgeService) -> None:
+def test_dimension_breakdowns_reconcile_to_total(service: GroundworkService) -> None:
     total = service.run_query("SELECT sum(price) FROM analytics.order_items").rows[0][0]
     by_cat = service.run_query(
         "SELECT p.product_category_name_english, sum(i.price) FROM analytics.order_items i "
@@ -63,7 +63,7 @@ def test_dimension_breakdowns_reconcile_to_total(service: ContextForgeService) -
     assert sum(r[1] for r in by_cat.rows) == pytest.approx(total)
 
 
-def test_get_asset(service: ContextForgeService) -> None:
+def test_get_asset(service: GroundworkService) -> None:
     r = service.get_asset("analytics.orders")
     assert r.ok and r.asset["id"] == "asset.analytics.orders"
     assert r.certification_status == "draft" and r.queryable
@@ -75,7 +75,7 @@ def test_get_asset(service: ContextForgeService) -> None:
     assert not missing.ok and missing.error.code == "not_found"
 
 
-def test_get_definition_resolution(service: ContextForgeService) -> None:
+def test_get_definition_resolution(service: GroundworkService) -> None:
     by_id = service.get_definition("metric.on_time_delivery_rate")
     assert by_id.resolution == "metric" and by_id.certification_status == "draft"
     assert any("DRAFT" in w for w in by_id.warnings)
@@ -91,7 +91,7 @@ def test_get_definition_resolution(service: ContextForgeService) -> None:
     assert dep.certification_status == "deprecated" and any("DEPRECATED" in w for w in dep.warnings)
 
 
-def test_get_join_path(service: ContextForgeService) -> None:
+def test_get_join_path(service: GroundworkService) -> None:
     r = service.get_join_path("asset.analytics.customers", "asset.analytics.products")
     assert r.ok and r.found
     assert [s.join_id for s in r.steps] == [
@@ -114,7 +114,7 @@ def test_get_join_path(service: ContextForgeService) -> None:
     assert none.fanout_risk
 
 
-def test_get_policy(service: ContextForgeService) -> None:
+def test_get_policy(service: GroundworkService) -> None:
     p = service.get_policy("asset.analytics.orders:customer_unique_key")
     assert p.ok and p.sensitivity == "pseudonymous" and p.queryable_by_caller
     r = service.get_policy("asset.raw.customers:customer_zip_code_prefix")
@@ -122,14 +122,14 @@ def test_get_policy(service: ContextForgeService) -> None:
     assert "query.execute" in p.caller_capabilities and p.policy_id
 
 
-def test_explain_query(service: ContextForgeService) -> None:
+def test_explain_query(service: GroundworkService) -> None:
     r = service.explain_query("SELECT order_status, count(*) FROM analytics.orders GROUP BY 1")
     assert r.ok and r.valid and r.plan and r.estimated_max_cardinality and r.within_cost_limit
     bad = service.explain_query("SELECT customer_unique_id FROM analytics.orders")
     assert not bad.ok and bad.error.code.startswith("sql_rejected.")
 
 
-def test_search_via_service_reports_missing_context(service: ContextForgeService) -> None:
+def test_search_via_service_reports_missing_context(service: GroundworkService) -> None:
     r = service.search_assets("zzqx unknownterm")
     assert r.ok and r.results == [] and r.missing_context_explanation
     r2 = service.search_assets("order", {"types": ["asset"], "layers": ["serving"]}, 3)
@@ -137,7 +137,7 @@ def test_search_via_service_reports_missing_context(service: ContextForgeService
     assert all(x.context_version == service.store.version for x in r2.results)
 
 
-def test_audit_log_records_calls_without_rows(service: ContextForgeService) -> None:
+def test_audit_log_records_calls_without_rows(service: GroundworkService) -> None:
     service.run_query("SELECT count(*) FROM analytics.orders", {"request_id": "audit-test-1"})
     import sqlite3
 

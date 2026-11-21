@@ -7,23 +7,23 @@ exists yet (see `docs/EXPERIMENT_RESULTS.md`).
 ## Request path
 
 ```
-question ──► DataAgent.ask()  (src/contextforge/agent/runtime.py)
+question ──► DataAgent.ask()  (src/groundwork/agent/runtime.py)
               │  deterministic loop: steps ≤ max_steps, SQL failures ≤ max_sql_repairs,
               │  tokens ≤ max_total_tokens, wall clock ≤ deadline, cooperative cancellation
               ├─► ModelProvider / ProviderSession  (agent/providers/)
               │     anthropic_provider.py  official `anthropic` SDK 2.11.0, Messages API, tool use
               │     scripted.py            TEST DOUBLE only (never selectable from the CLI)
               └─► McpToolClient (agent/mcp_client.py) ── stdio ──► Phase 1 MCP server process
-                                                                   CONTEXTFORGE_PRINCIPAL, CONTEXTFORGE_CONTEXT_MODE
-                                                                   └─► ContextForgeService
+                                                                   GROUNDWORK_PRINCIPAL, GROUNDWORK_CONTEXT_MODE
+                                                                   └─► GroundworkService
                                                                         ├─ policy / capabilities
                                                                         ├─ context-mode filtering
                                                                         ├─ SQLGlot AST guard
                                                                         └─ killable read-only DuckDB worker
 ```
 
-The agent has exactly one route to data: MCP → `ContextForgeService` → SQL guard → worker. The
-`contextforge.agent` package opens no database connection (enforced by review and by
+The agent has exactly one route to data: MCP → `GroundworkService` → SQL guard → worker. The
+`groundwork.agent` package opens no database connection (enforced by review and by
 `tests/unit/test_eval_core.py::test_agent_code_cannot_see_labels`, which also forbids imports of the
 evaluation package).
 
@@ -95,16 +95,16 @@ runtime + MCP wire test. Not live-verified.
 
 | Requirement | Implementation |
 |---|---|
-| Selection | `--provider openai` or `CONTEXTFORGE_PROVIDER=openai`; `--model` (default `gpt-5.5`, an id listed by the installed SDK). A `claude-*` model with this provider is a config error |
+| Selection | `--provider openai` or `GROUNDWORK_PROVIDER=openai`; `--model` (default `gpt-5.5`, an id listed by the installed SDK). A `claude-*` model with this provider is a config error |
 | Credentials | only `OPENAI_API_KEY`; SDK workload identity, admin keys and provider integrations are not used |
-| Endpoint | `base_url` passed explicitly (default `https://api.openai.com/v1`); an ambient `OPENAI_BASE_URL` is ignored (tested); `CONTEXTFORGE_OPENAI_BASE_URL` overrides deliberately and is recorded |
+| Endpoint | `base_url` passed explicitly (default `https://api.openai.com/v1`); an ambient `OPENAI_BASE_URL` is ignored (tested); `GROUNDWORK_OPENAI_BASE_URL` overrides deliberately and is recorded |
 | API | Responses API with function tools, stateless (`store=false`, no `previous_response_id`); every output item, including reasoning with `reasoning.encrypted_content`, is replayed unchanged; each tool result becomes a `function_call_output` item. Chat Completions was dropped: gpt-5.5 rejects function tools + `reasoning_effort` there (HTTP 400 on the first live call) |
 | Retries | SDK retries disabled; adapter retries 429 / 5xx / connection / timeout, honouring `retry-after`; `insufficient_quota`, 400, 401, 403, 404 fail fast |
 | Reasoning / sampling | `effort` sent as `reasoning_effort`; `temperature` only if configured. A model that rejects either returns a 400, which is surfaced, not dropped |
 | Stop reasons | `tool_calls`->`tool_use`, `stop`->`end_turn`, `length`->`max_tokens`, `content_filter` or a `refusal` message->`refusal` |
 | Usage | `prompt_tokens - cached_tokens` -> input; `cached_tokens` -> cache read; `completion_tokens` (incl. reasoning) -> output |
 | Storage | `store=False` |
-| Cost | no built-in OpenAI prices (never guessed); `CONTEXTFORGE_PRICES_FILE` supplies operator-verified prices (its hash goes into the pricing version); a budgeted run on an unpriced model is BLOCKED |
+| Cost | no built-in OpenAI prices (never guessed); `GROUNDWORK_PRICES_FILE` supplies operator-verified prices (its hash goes into the pricing version); a budgeted run on an unpriced model is BLOCKED |
 | Model switching | no fallback; the resolved model id (e.g. a dated snapshot) is recorded per call |
 
 Additional providers are added as independent adapters implementing the same two methods.
@@ -124,8 +124,8 @@ test double that deliberately obeys an injection).
 
 ## Context modes (experimental conditions)
 
-`CONTEXTFORGE_CONTEXT_MODE` is set when the MCP server process starts (`raw_schema | descriptions |
-full_context`); the agent cannot change it. Filtering happens in `ContextForgeService` and
+`GROUNDWORK_CONTEXT_MODE` is set when the MCP server process starts (`raw_schema | descriptions |
+full_context`); the agent cannot change it. Filtering happens in `GroundworkService` and
 `SearchIndex`, not in prompts:
 
 | | raw_schema | descriptions | full_context |

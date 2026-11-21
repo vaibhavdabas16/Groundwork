@@ -11,10 +11,10 @@ from typing import Any
 
 import pytest
 
-from contextforge.agent.mcp_client import server_parameters
-from contextforge.agent.providers.scripted import turn
-from contextforge.config.settings import ContextMode, Settings
-from contextforge.product.proposals.patches import PatchError, check_repo_path
+from groundwork.agent.mcp_client import server_parameters
+from groundwork.agent.providers.scripted import turn
+from groundwork.config.settings import ContextMode, Settings
+from groundwork.product.proposals.patches import PatchError, check_repo_path
 
 from .test_product_slack_flow import USER, make_core, msg, wait
 
@@ -130,7 +130,7 @@ def test_database_outage_is_reported_honestly_and_never_proposes_context(
     [
         "evals/expected/cf-001.json",
         "evals/cases/answerable_core.yaml",
-        "src/contextforge/eval/scoring.py",
+        "src/groundwork/eval/scoring.py",
         ".github/workflows/ci.yml",
         "context/ownership/owners.yaml",
         "context/policies/policy.yaml",

@@ -3,8 +3,8 @@
 Machine-readable summary: [`docs/phase2_handoff.json`](phase2_handoff.json).
 
 ## TL;DR
-- **Agent** (`src/contextforge/agent/`): a working LLM agent built on the Anthropic Messages API (SDK 2.11.0). It works only through the Phase 1 MCP server, so all SQL goes through the governed guard and the read-only worker. It returns a structured `AgentResponse` with one of six outcome types.
-- **Evaluation platform** (`src/contextforge/eval/`, `evals/`):
+- **Agent** (`src/groundwork/agent/`): a working LLM agent built on the Anthropic Messages API (SDK 2.11.0). It works only through the Phase 1 MCP server, so all SQL goes through the governed guard and the read-only worker. It returns a structured `AgentResponse` with one of six outcome types.
+- **Evaluation platform** (`src/groundwork/eval/`, `evals/`):
   - 90 cases with gold SQL executed on the frozen snapshot;
   - three isolated context conditions, filtered at the server;
   - deterministic execution-based scoring;
@@ -75,15 +75,15 @@ Defects found and fixed while building Phase 2:
 ## Test commands executed (this environment)
 ```
 uv run ruff check src tests && uv run ruff format --check src tests && uv run mypy
-uv run contextforge validate-context && uv run contextforge health
-uv run contextforge eval gold freeze | check | lock | verify | status
+uv run groundwork validate-context && uv run groundwork health
+uv run groundwork eval gold freeze | check | lock | verify | status
 uv run pytest -q          # see IMPLEMENTATION_STATUS.md for the final count
-uv run contextforge ask "How many orders were canceled?"   # -> BLOCKED, exit 3
-uv run contextforge eval gate                               # -> BLOCKED, exit 3
+uv run groundwork ask "How many orders were canceled?"   # -> BLOCKED, exit 3
+uv run groundwork eval gate                               # -> BLOCKED, exit 3
 ```
 
 ## Remaining blockers
-1. **Provider credentials.** Set `CONTEXTFORGE_PROVIDER=openai` and `OPENAI_API_KEY` (plus `CONTEXTFORGE_PRICES_FILE` with verified prices to use `--budget-usd`). Then run the commands in `EXPERIMENT_RESULTS.md`.
+1. **Provider credentials.** Set `GROUNDWORK_PROVIDER=openai` and `OPENAI_API_KEY` (plus `GROUNDWORK_PRICES_FILE` with verified prices to use `--budget-usd`). Then run the commands in `EXPERIMENT_RESULTS.md`.
 2. **Human review of gold.** Register real reviewers in `owners.yaml` and review held-out cases with `eval gold review`. At least 50 are needed for the gate.
 3. **Human certification of context.** This is a Phase 1 carry-over: every governed definition is still a DRAFT.
 4. **Unverified infrastructure.** Docker, make and GitHub Actions are unverified here: the tools are not installed and there is no remote repository. Branch protection and the `live-eval` environment must be configured by a repository admin.

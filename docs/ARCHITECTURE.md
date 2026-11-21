@@ -1,10 +1,10 @@
-# ContextForge architecture
+# Groundwork architecture
 
 ```
                     Slack workspace (Socket Mode WebSocket, outbound only)
                                    │ app_mention / message.im / block_actions / view_submission
 ┌──────────────────────────────────▼───────────────────────────────────────────────────────────┐
-│ app container: `contextforge product run`                                                      │
+│ app container: `groundwork product run`                                                      │
 │                                                                                                │
 │  slack_app.py (Bolt) ── ack ≤3 s ──► core.ProductCore                                          │
 │     dedupe(event_id) · allow-list · consent · rate limit · conversations (bounded state machine) │
@@ -13,7 +13,7 @@
 │  agent.DataAgent ──► model provider (OpenAI / Anthropic; explicit, no fallback)                │
 │     │ stdio (one MCP server per request; principal + context release fixed at start)          │
 │     ▼                                                                                          │
-│  mcp_server ─► ContextForgeService ─► policy ─► SQL guard (AST) ─► read-only DuckDB worker     │
+│  mcp_server ─► GroundworkService ─► policy ─► SQL guard (AST) ─► read-only DuckDB worker     │
 │                                                            (subprocess, killable)              │
 │  failures.classify ─► FailureStore ─► proposals.engine (diagnose → draft, grounded)            │
 │         │                                   │                                                  │

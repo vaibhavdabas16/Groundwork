@@ -14,8 +14,8 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from contextforge.product.github import AppInstallationToken, GitHubClient, GitHubError, StaticToken
-from contextforge.product.proposals.patches import PatchError
+from groundwork.product.github import AppInstallationToken, GitHubClient, GitHubError, StaticToken
+from groundwork.product.proposals.patches import PatchError
 
 REPO = "acme/context"
 
@@ -151,7 +151,7 @@ def client(fake: FakeGitHub, **kw: Any) -> GitHubClient:
 def test_branch_commit_and_pr_are_idempotent() -> None:
     fake = FakeGitHub()
     gh = client(fake)
-    branch = "contextforge/proposal-cfp-1"
+    branch = "groundwork/proposal-cfp-1"
     gh.ensure_branch(branch, "main")
     gh.ensure_branch(branch, "main")  # retry: no second ref creation
     assert sum(1 for c in fake.calls if c == ("POST", f"/repos/{REPO}/git/refs")) == 1
@@ -176,7 +176,7 @@ def test_branch_commit_and_pr_are_idempotent() -> None:
     "path",
     [
         ".github/workflows/ci.yml",
-        "src/contextforge/eval/scoring.py",
+        "src/groundwork/eval/scoring.py",
         "evals/expected/cf-001.json",
         "context/policies/policy.yaml",
         "context/ownership/owners.yaml",
